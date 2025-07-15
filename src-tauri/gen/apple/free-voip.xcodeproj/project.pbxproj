@@ -1,0 +1,479 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 63;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0175227D4050580763F33A7F /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1216CF445D504B6AEEDB5225 /* MetalKit.framework */; };
+		2011C7DD6C93432304D84CBC /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F1167F7D0BED5F46870019 /* CoreGraphics.framework */; };
+		24BAA8B1B2946DCE12EB7EA5 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EEACF6070793CB51077BA0E /* libapp.a */; };
+		2B81138C3F5EAE4DDD9D7CF3 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BFA1B9F364B639C54B75CBBE /* Metal.framework */; };
+		2F983CAB425A40056255BB98 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A2092C9A0B6896D9A0AB17D0 /* Security.framework */; };
+		35BE03CFF90E5E26E6C496C5 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BA746A2082DA40B654248F52 /* QuartzCore.framework */; };
+		49C5216BD115D38A39D127FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4BF4B4E18DC143F816858B54 /* LaunchScreen.storyboard */; };
+		58C9C59E67AF63A6CE24F000 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 65EA1ACA5B7424AAD7CCF697 /* main.mm */; };
+		7C76C9917B1044306BEA53AA /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6D02C4DD9A8E2D1D2D5368E4 /* UIKit.framework */; };
+		8BA2E792721A43850B2A88E7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E68350E8942F054406611C2A /* Assets.xcassets */; };
+		AB371582830DB47873F851E4 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A930556A90A88E9BC6487A96 /* WebKit.framework */; };
+		DBBC3C1E8F78DEDD628448E9 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = EFB121F92B923E8ED91E5670 /* assets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		02C4D32E3E8ED8300F40DC08 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
+		0A699BA4A4776ED1237220D2 /* lib.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = lib.rs; sourceTree = "<group>"; };
+		1216CF445D504B6AEEDB5225 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		45C1D4FC4A72134DC5B592CE /* free-voip_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "free-voip_iOS.entitlements"; sourceTree = "<group>"; };
+		4BF4B4E18DC143F816858B54 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		52F1167F7D0BED5F46870019 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		5EEACF6070793CB51077BA0E /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		65EA1ACA5B7424AAD7CCF697 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		6D02C4DD9A8E2D1D2D5368E4 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		962C1146CAD3455BCBEC07BF /* main.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = main.rs; sourceTree = "<group>"; };
+		A03443299775486BCEA11D52 /* free-voip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "free-voip.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2092C9A0B6896D9A0AB17D0 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		A930556A90A88E9BC6487A96 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		BA746A2082DA40B654248F52 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		BFA1B9F364B639C54B75CBBE /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		E68350E8942F054406611C2A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		EFB121F92B923E8ED91E5670 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
+		F089B2D06F9B2243FC5195D3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3BDCBF2EFA2ACD1980FBF995 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				24BAA8B1B2946DCE12EB7EA5 /* libapp.a in Frameworks */,
+				2011C7DD6C93432304D84CBC /* CoreGraphics.framework in Frameworks */,
+				2B81138C3F5EAE4DDD9D7CF3 /* Metal.framework in Frameworks */,
+				0175227D4050580763F33A7F /* MetalKit.framework in Frameworks */,
+				35BE03CFF90E5E26E6C496C5 /* QuartzCore.framework in Frameworks */,
+				2F983CAB425A40056255BB98 /* Security.framework in Frameworks */,
+				7C76C9917B1044306BEA53AA /* UIKit.framework in Frameworks */,
+				AB371582830DB47873F851E4 /* WebKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		08136B20E0BEEED67981635A /* Externals */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Externals;
+			sourceTree = "<group>";
+		};
+		0CEC5F2E8ED0D262514FA177 /* free-voip */ = {
+			isa = PBXGroup;
+			children = (
+				65EA1ACA5B7424AAD7CCF697 /* main.mm */,
+				7AC69E34FDD513F15FFD5B98 /* bindings */,
+			);
+			path = "free-voip";
+			sourceTree = "<group>";
+		};
+		0E94D632593D6907F368A581 = {
+			isa = PBXGroup;
+			children = (
+				EFB121F92B923E8ED91E5670 /* assets */,
+				E68350E8942F054406611C2A /* Assets.xcassets */,
+				4BF4B4E18DC143F816858B54 /* LaunchScreen.storyboard */,
+				08136B20E0BEEED67981635A /* Externals */,
+				80422B927EAFEDB2B3B5E346 /* free-voip_iOS */,
+				C622B55B53EA76572D754F22 /* Sources */,
+				8AAA60E4EF0320DD99106F12 /* src */,
+				1244169362E20E658BD5FB9E /* Frameworks */,
+				4D53F4BFE786D6B940A8B0B8 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		1244169362E20E658BD5FB9E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				52F1167F7D0BED5F46870019 /* CoreGraphics.framework */,
+				5EEACF6070793CB51077BA0E /* libapp.a */,
+				BFA1B9F364B639C54B75CBBE /* Metal.framework */,
+				1216CF445D504B6AEEDB5225 /* MetalKit.framework */,
+				BA746A2082DA40B654248F52 /* QuartzCore.framework */,
+				A2092C9A0B6896D9A0AB17D0 /* Security.framework */,
+				6D02C4DD9A8E2D1D2D5368E4 /* UIKit.framework */,
+				A930556A90A88E9BC6487A96 /* WebKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4D53F4BFE786D6B940A8B0B8 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A03443299775486BCEA11D52 /* free-voip.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7AC69E34FDD513F15FFD5B98 /* bindings */ = {
+			isa = PBXGroup;
+			children = (
+				02C4D32E3E8ED8300F40DC08 /* bindings.h */,
+			);
+			path = bindings;
+			sourceTree = "<group>";
+		};
+		80422B927EAFEDB2B3B5E346 /* free-voip_iOS */ = {
+			isa = PBXGroup;
+			children = (
+				45C1D4FC4A72134DC5B592CE /* free-voip_iOS.entitlements */,
+				F089B2D06F9B2243FC5195D3 /* Info.plist */,
+			);
+			path = "free-voip_iOS";
+			sourceTree = "<group>";
+		};
+		8AAA60E4EF0320DD99106F12 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				0A699BA4A4776ED1237220D2 /* lib.rs */,
+				962C1146CAD3455BCBEC07BF /* main.rs */,
+			);
+			name = src;
+			path = ../../src;
+			sourceTree = "<group>";
+		};
+		C622B55B53EA76572D754F22 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				0CEC5F2E8ED0D262514FA177 /* free-voip */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6E95E308787FA1ACE35A7FBB /* free-voip_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7539A2F6B239C683AC94C8E4 /* Build configuration list for PBXNativeTarget "free-voip_iOS" */;
+			buildPhases = (
+				05941D0D71D795A934424322 /* Build Rust Code */,
+				244CA75DA83FE8C3C8B7B7A0 /* Sources */,
+				C668A8100959B1B40A8651F8 /* Resources */,
+				3BDCBF2EFA2ACD1980FBF995 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "free-voip_iOS";
+			packageProductDependencies = (
+			);
+			productName = "free-voip_iOS";
+			productReference = A03443299775486BCEA11D52 /* free-voip.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		50167BCE0B98FF8FEC281C44 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = CF5DB82B24A03357FEE3A3B1 /* Build configuration list for PBXProject "free-voip" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 0E94D632593D6907F368A581;
+			minimizedProjectReferenceProxies = 1;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6E95E308787FA1ACE35A7FBB /* free-voip_iOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C668A8100959B1B40A8651F8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8BA2E792721A43850B2A88E7 /* Assets.xcassets in Resources */,
+				49C5216BD115D38A39D127FF /* LaunchScreen.storyboard in Resources */,
+				DBBC3C1E8F78DEDD628448E9 /* assets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		05941D0D71D795A934424322 /* Build Rust Code */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build Rust Code";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a",
+				"$(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cargo tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		244CA75DA83FE8C3C8B7B7A0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				58C9C59E67AF63A6CE24F000 /* main.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		566F90AF564938754449EAE8 /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = release;
+		};
+		6EC227652F7745A870BD9405 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = debug;
+		};
+		E1E26C1D766C21D4A3339817 /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "free-voip_iOS/free-voip_iOS.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = U29V6K83J6;
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "free-voip_iOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.codeboi.free-voip;
+				PRODUCT_NAME = "free-voip";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
+			};
+			name = release;
+		};
+		E7221BE84AA91CD7E10467F6 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "free-voip_iOS/free-voip_iOS.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = U29V6K83J6;
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "free-voip_iOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.codeboi.free-voip;
+				PRODUCT_NAME = "free-voip";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
+			};
+			name = debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7539A2F6B239C683AC94C8E4 /* Build configuration list for PBXNativeTarget "free-voip_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E7221BE84AA91CD7E10467F6 /* debug */,
+				E1E26C1D766C21D4A3339817 /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+		CF5DB82B24A03357FEE3A3B1 /* Build configuration list for PBXProject "free-voip" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6EC227652F7745A870BD9405 /* debug */,
+				566F90AF564938754449EAE8 /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 50167BCE0B98FF8FEC281C44 /* Project object */;
+}
