@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width height=device-height, initial-scale=1.0" />
 
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <link rel="stylesheet" href="/src/styles.css" />
@@ -12,7 +12,11 @@
 </head>
 
 <body>
-    <div id="root"></div>
+    <div class="grid grid-cols-12">
+        <main id="root"
+            class="col-span-full sm:col-span-10 sm:col-start-2 md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4 h-dvh text-center flex flex-col justify-center-safe items-center">
+        </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
         // Set the initial theme based on the user's system preference

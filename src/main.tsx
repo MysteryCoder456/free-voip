@@ -1,12 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router";
-import Home from "./routes/home";
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    Component: Home,
+    index: true,
+    lazy: () => import("./routes/home"),
+  },
+  {
+    path: "/get-started",
+    lazy: () => import("./routes/get-started"),
   },
 ]);
 
