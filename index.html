@@ -14,6 +14,15 @@
 <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+        // Set the initial theme based on the user's system preference
+        const root = window.document.documentElement;
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+            .matches
+            ? "dark"
+            : "light"
+        root.classList.add(systemTheme)
+    </script>
 </body>
 
 </html>
