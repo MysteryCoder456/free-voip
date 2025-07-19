@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { invoke } from "@tauri-apps/api/core";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { invoke } from "@tauri-apps/api/core";
 
 const formSchema = z.object({
   nickname: z
