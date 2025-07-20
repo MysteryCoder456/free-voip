@@ -4,13 +4,13 @@ use tauri::{AppHandle, Manager, State};
 use tauri_plugin_store::StoreExt;
 use tokio::sync::RwLock;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Ticket {
     nickname: String,
     node_id: NodeId,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct EndpointCredentials {
     self_ticket: Ticket,
     secret_key: SecretKey,
@@ -60,9 +60,10 @@ async fn login(
         .store("credentials.json")
         .map_err(|e| e.to_string())?;
     credentials_store.set(
-        "endpoint_credentials",
+        "endpoint",
         serde_json::to_value(&app_state.endpoint_credentials).map_err(|e| e.to_string())?,
     );
+    credentials_store.save().map_err(|e| e.to_string())?;
     credentials_store.close_resource();
 
     println!(
@@ -89,7 +90,7 @@ pub fn run() {
 
             // Populate with stored credentials
             let credential_store = app.store("credentials.json")?;
-            if let Some(credentials_value) = credential_store.get("endpoint_credentials") {
+            if let Some(credentials_value) = credential_store.get("endpoint") {
                 let credentials = serde_json::from_value::<EndpointCredentials>(credentials_value)?;
                 app_state.endpoint_credentials = Some(credentials);
             }
