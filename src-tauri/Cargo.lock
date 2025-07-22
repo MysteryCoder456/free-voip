@@ -1404,6 +1404,8 @@ name = "free-voip"
 version = "0.1.0"
 dependencies = [
  "iroh",
+ "iroh-base",
+ "postcard",
  "serde",
  "serde_json",
  "tauri",
@@ -2498,6 +2500,7 @@ dependencies = [
  "ed25519-dalek",
  "n0-snafu",
  "nested_enum_utils",
+ "postcard",
  "rand_core 0.6.4",
  "serde",
  "snafu",

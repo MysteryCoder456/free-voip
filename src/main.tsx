@@ -31,11 +31,11 @@ const router = createBrowserRouter([
         children: [
           {
             path: "my-card",
-            Component: () => <h1>My Card</h1>,
+            lazy: () => import("./routes/app/my-card"),
           },
           {
             path: "contact-list",
-            Component: () => <h1>Contacts</h1>,
+            lazy: () => import("./routes/app/contacts-list"),
           },
         ],
       },

@@ -1,18 +1,31 @@
 use iroh::{Endpoint, NodeId, SecretKey};
+use iroh_base::ticket::{ParseError as TicketParseError, Ticket};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_store::StoreExt;
 use tokio::sync::RwLock;
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Ticket {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ContactTicket {
     nickname: String,
     node_id: NodeId,
 }
 
+impl Ticket for ContactTicket {
+    const KIND: &'static str = "node";
+
+    fn to_bytes(&self) -> Vec<u8> {
+        postcard::to_stdvec(self).expect("Postcard serializtion should be infallible")
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Result<Self, TicketParseError> {
+        postcard::from_bytes(bytes).map_err(Into::into)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 struct EndpointCredentials {
-    self_ticket: Ticket,
+    self_ticket: ContactTicket,
     secret_key: SecretKey,
 }
 
@@ -73,7 +86,7 @@ async fn login(
     // Create new endpoint
     let endpoint = build_endpoint(None).await.map_err(|e| e.to_string())?;
     app_state.endpoint_credentials = Some(EndpointCredentials {
-        self_ticket: Ticket {
+        self_ticket: ContactTicket {
             nickname,
             node_id: endpoint.node_id(),
         },
@@ -100,6 +113,26 @@ async fn login(
     Ok(())
 }
 
+#[tauri::command]
+async fn get_serialized_self_ticket(
+    app_state: State<'_, AppState>,
+) -> Result<serde_json::Value, String> {
+    let self_ticket = {
+        let app_state = app_state.read().await;
+        let credentials = app_state
+            .endpoint_credentials
+            .as_ref()
+            .ok_or("Credentials not found".to_owned())?;
+        credentials.self_ticket.clone()
+    };
+
+    let response = serde_json::json!({
+        "nickname": self_ticket.nickname,
+        "serializedTicket": Ticket::serialize(&self_ticket),
+    });
+    Ok(response)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -123,7 +156,11 @@ pub fn run() {
             app.manage(AppState::new(app_state));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![restore_login, login])
+        .invoke_handler(tauri::generate_handler![
+            restore_login,
+            login,
+            get_serialized_self_ticket,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
