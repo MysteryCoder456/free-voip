@@ -40,7 +40,7 @@ export function Component() {
             <div>
               <QRCode
                 value={selfTicket.serializedTicket}
-                className="p-1 size-full bg-white"
+                className="p-2 size-full bg-white"
               />
               <p className="mt-4 text-center text-2xl">{selfTicket.nickname}</p>
             </div>

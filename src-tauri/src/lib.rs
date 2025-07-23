@@ -146,6 +146,18 @@ async fn get_serialized_self_ticket(
     Ok(response)
 }
 
+#[tauri::command]
+fn get_contacts(app_handle: AppHandle) -> Result<Vec<ContactTicket>, String> {
+    let contacts_store = app_handle
+        .store("contacts.json")
+        .map_err(|e| e.to_string())?;
+
+    contacts_store
+        .get("contacts")
+        .map(|v| serde_json::from_value::<Vec<ContactTicket>>(v).map_err(|e| e.to_string()))
+        .unwrap_or(Ok(vec![]))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -170,6 +182,7 @@ pub fn run() {
             restore_login,
             login,
             get_serialized_self_ticket,
+            get_contacts,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

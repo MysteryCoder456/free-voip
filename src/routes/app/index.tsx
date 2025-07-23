@@ -49,14 +49,17 @@ function NavLink({
 export function Component() {
   return (
     <div className="size-full flex flex-col">
-      <div className="grow flex justify-center-safe items-center-safe">
+      <div className="grow flex justify-center-safe items-center-safe mb-6">
         <Outlet />
       </div>
 
-      <NavigationMenu className="max-w-full max-h-max">
-        <NavigationMenuList className="gap-4">
+      <NavigationMenu
+        viewport={false}
+        className="max-w-full max-h-max sticky bottom-3 backdrop-blur-sm rounded-xl border-secondary border-1"
+      >
+        <NavigationMenuList className="gap-4 my-2">
           <NavLink to="/app/my-card" icon="qr-code" label="My Card" />
-          <NavLink to="/app/contact-list" icon="contact" label="Contacts" />
+          <NavLink to="/app/contacts-list" icon="contact" label="Contacts" />
         </NavigationMenuList>
       </NavigationMenu>
     </div>

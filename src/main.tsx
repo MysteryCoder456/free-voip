@@ -21,7 +21,7 @@ const router = createBrowserRouter([
         Component: () => {
           const navigate = useNavigate();
           useEffect(() => {
-            navigate("my-card");
+            navigate("contacts-list");
           }, [navigate]);
           return <Loader className="animate-spin" />;
         },
@@ -34,7 +34,7 @@ const router = createBrowserRouter([
             lazy: () => import("./routes/app/my-card"),
           },
           {
-            path: "contact-list",
+            path: "contacts-list",
             lazy: () => import("./routes/app/contacts-list"),
           },
         ],
