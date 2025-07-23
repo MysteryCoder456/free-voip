@@ -2,7 +2,6 @@ mod contacts;
 
 use std::ops::DerefMut;
 
-use crate::contacts::ContactsProtocol;
 use contacts::ContactTicket;
 use iroh::{protocol::Router, Endpoint, SecretKey};
 use iroh_base::ticket::Ticket;
@@ -54,7 +53,7 @@ fn build_router(app_state: &mut AppStateInner, endpoint: Endpoint) -> Router {
         app_state.request_rx = Some(request_rx);
         app_state.response_tx = Some(response_tx);
 
-        ContactsProtocol::new(endpoint.clone(), request_tx, response_rx)
+        contacts::ContactsProtocol::new(endpoint.clone(), request_tx, response_rx)
     };
 
     Router::builder(endpoint)
