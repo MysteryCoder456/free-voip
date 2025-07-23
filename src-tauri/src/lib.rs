@@ -67,7 +67,7 @@ async fn restore_login(app_state: State<'_, AppState>) -> Result<bool, String> {
     let mut app_state = app_state.write().await;
 
     if app_state.router.is_some() {
-        // Endpoint and Router already active, no need to restore
+        // Endpoint and Router are already active, nothing to restore.
         return Ok(true);
     }
 
