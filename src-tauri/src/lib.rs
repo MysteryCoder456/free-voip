@@ -13,6 +13,8 @@ use tokio::sync::{
     RwLock,
 };
 
+use crate::contacts::ContactsProtocol;
+
 #[derive(Debug, Serialize, Deserialize)]
 struct EndpointCredentials {
     self_ticket: ContactTicket,
@@ -53,7 +55,7 @@ fn build_router(app_state: &mut AppStateInner, endpoint: Endpoint) -> Router {
         app_state.request_rx = Some(request_rx);
         app_state.response_tx = Some(response_tx);
 
-        contacts::ContactsProtocol::new(endpoint.clone(), request_tx, response_rx)
+        contacts::ContactsProtocol::new(request_tx, response_rx)
     };
 
     Router::builder(endpoint)
@@ -158,9 +160,29 @@ fn get_contacts(app_handle: AppHandle) -> Result<Vec<ContactTicket>, String> {
         .unwrap_or(Ok(vec![]))
 }
 
+#[tauri::command]
+async fn send_contact_request(
+    serialized_ticket: String,
+    app_state: State<'_, AppState>,
+) -> Result<bool, String> {
+    let contact_ticket =
+        <ContactTicket as Ticket>::deserialize(&serialized_ticket).map_err(|e| e.to_string())?;
+    println!("Sending contact request to {:?}", contact_ticket);
+
+    let app_state = app_state.read().await;
+    let router = app_state.router.as_ref().ok_or("Router not initialized")?;
+    let self_ticket = app_state
+        .endpoint_credentials
+        .as_ref()
+        .map(|c| c.self_ticket.clone())
+        .ok_or("Credentials not found")?;
+
+    ContactsProtocol::send_request(router.endpoint(), contact_ticket.node_id, self_ticket).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .setup(|app| {
@@ -183,7 +205,12 @@ pub fn run() {
             login,
             get_serialized_self_ticket,
             get_contacts,
-        ])
+        ]);
+
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    let builder = builder.plugin(tauri_plugin_barcode_scanner::init());
+
+    builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

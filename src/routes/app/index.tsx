@@ -19,7 +19,10 @@ function NavLink({
   label: string;
 }) {
   const location = useLocation();
-  const isActive = useMemo(() => location.pathname === to, [to, location]);
+  const isActive = useMemo(
+    () => location.pathname.startsWith(to.toString()),
+    [to, location],
+  );
 
   return (
     <NavigationMenuItem>

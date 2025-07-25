@@ -12,6 +12,7 @@
 		24BAA8B1B2946DCE12EB7EA5 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EEACF6070793CB51077BA0E /* libapp.a */; };
 		2B81138C3F5EAE4DDD9D7CF3 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BFA1B9F364B639C54B75CBBE /* Metal.framework */; };
 		2F983CAB425A40056255BB98 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A2092C9A0B6896D9A0AB17D0 /* Security.framework */; };
+		340D99292E33DF2900FA7770 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 340D99282E33DF2900FA7770 /* SystemConfiguration.framework */; };
 		35BE03CFF90E5E26E6C496C5 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BA746A2082DA40B654248F52 /* QuartzCore.framework */; };
 		49C5216BD115D38A39D127FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4BF4B4E18DC143F816858B54 /* LaunchScreen.storyboard */; };
 		58C9C59E67AF63A6CE24F000 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 65EA1ACA5B7424AAD7CCF697 /* main.mm */; };
@@ -26,6 +27,7 @@
 		02C4D32E3E8ED8300F40DC08 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
 		0A699BA4A4776ED1237220D2 /* lib.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = lib.rs; sourceTree = "<group>"; };
 		1216CF445D504B6AEEDB5225 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		340D99282E33DF2900FA7770 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		45C1D4FC4A72134DC5B592CE /* free-voip_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "free-voip_iOS.entitlements"; sourceTree = "<group>"; };
 		4BF4B4E18DC143F816858B54 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		52F1167F7D0BED5F46870019 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -50,6 +52,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				24BAA8B1B2946DCE12EB7EA5 /* libapp.a in Frameworks */,
+				340D99292E33DF2900FA7770 /* SystemConfiguration.framework in Frameworks */,
 				2011C7DD6C93432304D84CBC /* CoreGraphics.framework in Frameworks */,
 				2B81138C3F5EAE4DDD9D7CF3 /* Metal.framework in Frameworks */,
 				0175227D4050580763F33A7F /* MetalKit.framework in Frameworks */,
@@ -98,6 +101,7 @@
 		1244169362E20E658BD5FB9E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				340D99282E33DF2900FA7770 /* SystemConfiguration.framework */,
 				52F1167F7D0BED5F46870019 /* CoreGraphics.framework */,
 				5EEACF6070793CB51077BA0E /* libapp.a */,
 				BFA1B9F364B639C54B75CBBE /* Metal.framework */,
@@ -253,7 +257,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cargo tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
+			shellScript = "cargo tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -406,6 +410,7 @@
 				INFOPLIST_FILE = "free-voip_iOS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Free VoIP";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				IPHONEOS_DEPLOYMENT_TARGET = 13;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -450,6 +455,7 @@
 				INFOPLIST_FILE = "free-voip_iOS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Free VoIP";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				IPHONEOS_DEPLOYMENT_TARGET = 13;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

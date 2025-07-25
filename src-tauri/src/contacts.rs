@@ -38,31 +38,24 @@ impl Ticket for ContactTicket {
 
 #[derive(Debug)]
 pub struct ContactsProtocol {
-    endpoint: Endpoint,
     request_tx: Sender<ContactTicket>,
     response_rx: Mutex<Receiver<bool>>,
 }
 
 impl ContactsProtocol {
-    pub fn new(
-        endpoint: Endpoint,
-        request_tx: Sender<ContactTicket>,
-        response_rx: Receiver<bool>,
-    ) -> Self {
+    pub fn new(request_tx: Sender<ContactTicket>, response_rx: Receiver<bool>) -> Self {
         Self {
-            endpoint,
             request_tx,
             response_rx: Mutex::new(response_rx),
         }
     }
 
     pub async fn send_request(
-        &self,
+        endpoint: &Endpoint,
         recipient_addr: impl Into<NodeAddr>,
         sender_ticket: ContactTicket,
     ) -> Result<bool, String> {
-        let connection = self
-            .endpoint
+        let connection = endpoint
             .connect(recipient_addr, ALPN)
             .await
             .map_err(|e| e.to_string())?;

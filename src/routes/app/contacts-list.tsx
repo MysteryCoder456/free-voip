@@ -1,8 +1,18 @@
+import { invoke } from "@tauri-apps/api/core";
+import { Format, scan } from "@tauri-apps/plugin-barcode-scanner";
 import { Loader, PhoneCall, Plus, VideoIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Contact {
   nickname: string;
@@ -45,6 +55,7 @@ function ContactCard({
 
 export function Component() {
   const [isLoading, setIsLoading] = useState(true);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
 
   const fetchContacts = useCallback(async () => {
@@ -64,17 +75,64 @@ export function Component() {
     fetchContacts();
   }, [fetchContacts]);
 
-  const addContactClicked = useCallback(() => {
-    // TODO: implement
+  const sendRequest = useCallback(async (serializedTicket: string) => {
+    const response = await invoke<boolean>("send_contact_request", {
+      serializedTicket,
+    });
+
+    // TODO: Show response feedback
   }, []);
+
+  const onManualEntrySubmitted = useCallback(async () => {
+    // TODO: Handle manual entry
+    setAddDialogOpen(false);
+  }, [sendRequest]);
+
+  const onScanClicked = useCallback(async () => {
+    const scanned = await scan({
+      cameraDirection: "back",
+      formats: [Format.QRCode],
+      windowed: false,
+    });
+
+    setAddDialogOpen(false);
+    await sendRequest(scanned.content);
+  }, [sendRequest]);
 
   return (
     <div className="size-full">
       <h2 className="w-full flex flex-row justify-between">
         <span>Contacts</span>
-        <Button variant="outline" onClick={addContactClicked}>
-          <Plus />
-        </Button>
+
+        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <Plus />
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Contact</DialogTitle>
+              <DialogDescription>
+                Add a new contact by scanning a <b>Contact Ticket</b> or by
+                entering one manually.
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter>
+              <Button
+                disabled
+                variant="outline"
+                onClick={onManualEntrySubmitted}
+              >
+                Enter Manually
+              </Button>
+
+              <Button onClick={onScanClicked}>Scan</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </h2>
 
       {isLoading ? (
