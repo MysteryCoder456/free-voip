@@ -19,6 +19,7 @@ const RESPONSE_ACCEPT: u8 = 1;
 const RESPONSE_DECLINE: u8 = 0;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ContactTicket {
     pub nickname: String,
     pub node_id: NodeId,
@@ -86,10 +87,7 @@ impl ProtocolHandler for ContactsProtocol {
             proto_rx.read_to_string(&mut str_buf).await?;
             <ContactTicket as Ticket>::deserialize(&str_buf).map_err(AcceptError::from_err)?
         };
-        println!(
-            "Received contact request from {} ({})",
-            contact_ticket.nickname, contact_ticket.node_id
-        );
+        println!("Received contact request from {:?}", contact_ticket);
 
         // Get user's response
         let response = {

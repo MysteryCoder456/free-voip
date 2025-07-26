@@ -83,7 +83,7 @@ export function Component() {
     setAddDialogIsLoading(true);
 
     try {
-      const [nickname, accepted] = await invoke<[string, boolean]>(
+      const [contact, accepted] = await invoke<[Contact, boolean]>(
         "send_contact_request",
         {
           serializedTicket,
@@ -92,14 +92,25 @@ export function Component() {
 
       if (accepted) {
         // Accepted
-        // TODO: Save to contacts list
-
-        toast.success(`${nickname} accepted your contact request`);
+        toast.success(`${contact.nickname} accepted your contact request`);
         setAddDialogOpen(false);
         setAddDialogTicket("");
+
+        // Update contacts list
+        try {
+          await invoke("add_contact", { contactTicket: contact });
+        } catch (error) {
+          console.error("Unable to add contact", error);
+
+          if (typeof error === "string") {
+            toast.error("Unable to add contact", {
+              description: error,
+            });
+          }
+        }
       } else {
         // Rejected
-        toast.warning(`${nickname} rejected your contact request`);
+        toast.warning(`${contact.nickname} rejected your contact request`);
       }
     } catch (error) {
       console.error("Unable to send contact request", error);

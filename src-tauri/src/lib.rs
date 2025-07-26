@@ -6,7 +6,7 @@ use contacts::ContactTicket;
 use iroh::{protocol::Router, Endpoint, SecretKey};
 use iroh_base::ticket::Ticket;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_store::StoreExt;
 use tokio::sync::{
     broadcast::{channel, Receiver, Sender},
@@ -16,6 +16,7 @@ use tokio::sync::{
 use crate::contacts::ContactsProtocol;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct EndpointCredentials {
     self_ticket: ContactTicket,
     secret_key: SecretKey,
@@ -42,18 +43,32 @@ async fn build_endpoint(
     };
 
     let endpoint = builder.bind().await?;
-    println!("Endpoint created with NodeId {:?}", endpoint.node_id());
+    println!("Endpoint created with {:?}", endpoint.node_id());
 
     Ok(endpoint)
 }
 
-fn build_router(app_state: &mut AppStateInner, endpoint: Endpoint) -> Router {
+fn build_router(
+    app_handle: AppHandle,
+    app_state: &mut AppStateInner,
+    endpoint: Endpoint,
+) -> Router {
     let contacts = {
         // Create and set protocol communication channels
         let (request_tx, request_rx) = channel::<ContactTicket>(8);
         let (response_tx, response_rx) = channel::<bool>(8);
-        app_state.request_rx = Some(request_rx);
+        app_state.request_rx = Some(request_rx.resubscribe());
         app_state.response_tx = Some(response_tx);
+
+        // Listen to requests
+        let mut request_rx = request_rx;
+        tokio::spawn(async move {
+            while let Ok(ticket) = request_rx.recv().await {
+                if let Err(e) = app_handle.emit("contact-request", ticket) {
+                    eprintln!("Failed to emit contact request event: {}", e);
+                }
+            }
+        });
 
         contacts::ContactsProtocol::new(request_tx, response_rx)
     };
@@ -64,7 +79,10 @@ fn build_router(app_state: &mut AppStateInner, endpoint: Endpoint) -> Router {
 }
 
 #[tauri::command]
-async fn restore_login(app_state: State<'_, AppState>) -> Result<bool, String> {
+async fn restore_login(
+    app_handle: AppHandle,
+    app_state: State<'_, AppState>,
+) -> Result<bool, String> {
     let mut app_state = app_state.write().await;
 
     if app_state.router.is_some() {
@@ -77,7 +95,7 @@ async fn restore_login(app_state: State<'_, AppState>) -> Result<bool, String> {
         let endpoint = build_endpoint(Some(credentials.secret_key.clone()))
             .await
             .map_err(|e| e.to_string())?;
-        app_state.router = Some(build_router(app_state.deref_mut(), endpoint));
+        app_state.router = Some(build_router(app_handle, app_state.deref_mut(), endpoint));
 
         return Ok(true);
     }
@@ -103,7 +121,7 @@ async fn login(
         },
         secret_key: endpoint.secret_key().clone(),
     });
-    let router = build_router(app_state.deref_mut(), endpoint);
+    let router = build_router(app_handle.clone(), app_state.deref_mut(), endpoint);
 
     // Store credentials
     let credentials_store = app_handle
@@ -161,10 +179,16 @@ fn get_contacts(app_handle: AppHandle) -> Result<Vec<ContactTicket>, String> {
 }
 
 #[tauri::command]
+fn add_contact(contact_ticket: ContactTicket) -> Result<(), String> {
+    // TODO: implement
+    Err("Not yet implemented".to_owned())
+}
+
+#[tauri::command]
 async fn send_contact_request(
     serialized_ticket: String,
     app_state: State<'_, AppState>,
-) -> Result<(String, bool), String> {
+) -> Result<(ContactTicket, bool), String> {
     let contact_ticket =
         <ContactTicket as Ticket>::deserialize(&serialized_ticket).map_err(|e| e.to_string())?;
     println!("Sending contact request to {:?}", contact_ticket);
@@ -180,7 +204,23 @@ async fn send_contact_request(
     let accepted =
         ContactsProtocol::send_request(router.endpoint(), contact_ticket.node_id, self_ticket)
             .await?;
-    Ok((contact_ticket.nickname, accepted))
+    Ok((contact_ticket, accepted))
+}
+
+#[tauri::command]
+async fn respond_to_contact_request(
+    app_state: State<'_, AppState>,
+    accept: bool,
+) -> Result<(), String> {
+    let app_state = app_state.read().await;
+
+    if let Some(response_tx) = &app_state.response_tx {
+        // Send the response to the contact request
+        response_tx.send(accept).map_err(|e| e.to_string())?;
+        Ok(())
+    } else {
+        Err("Contact request response channel not initialized".to_owned())
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -209,7 +249,9 @@ pub fn run() {
             login,
             get_serialized_self_ticket,
             get_contacts,
+            add_contact,
             send_contact_request,
+            respond_to_contact_request,
         ]);
 
     #[cfg(any(target_os = "android", target_os = "ios"))]
