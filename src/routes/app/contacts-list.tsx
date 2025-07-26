@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface Contact {
   nickname: string;
@@ -55,8 +56,11 @@ function ContactCard({
 
 export function Component() {
   const [isLoading, setIsLoading] = useState(true);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
+
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addDialogTicket, setAddDialogTicket] = useState<string>("");
+  const [addDialogIsLoading, setAddDialogIsLoading] = useState(false);
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -76,17 +80,45 @@ export function Component() {
   }, [fetchContacts]);
 
   const sendRequest = useCallback(async (serializedTicket: string) => {
-    const response = await invoke<boolean>("send_contact_request", {
-      serializedTicket,
-    });
+    setAddDialogIsLoading(true);
 
-    // TODO: Show response feedback
+    try {
+      const [nickname, accepted] = await invoke<[string, boolean]>(
+        "send_contact_request",
+        {
+          serializedTicket,
+        },
+      );
+
+      if (accepted) {
+        // Accepted
+        // TODO: Save to contacts list
+
+        toast.success(`${nickname} accepted your contact request`);
+        setAddDialogOpen(false);
+        setAddDialogTicket("");
+      } else {
+        // Rejected
+        toast.warning(`${nickname} rejected your contact request`);
+      }
+    } catch (error) {
+      console.error("Unable to send contact request", error);
+
+      if (typeof error === "string") {
+        toast.error("Unable to send contact request", {
+          description: error,
+        });
+      }
+    } finally {
+      setAddDialogIsLoading(false);
+    }
   }, []);
 
   const onManualEntrySubmitted = useCallback(async () => {
-    // TODO: Handle manual entry
-    setAddDialogOpen(false);
-  }, [sendRequest]);
+    const trimmedTicket = addDialogTicket.trim();
+    if (trimmedTicket.length === 0) return false;
+    await sendRequest(trimmedTicket);
+  }, [sendRequest, addDialogTicket]);
 
   const onScanClicked = useCallback(async () => {
     const scanned = await scan({
@@ -94,8 +126,6 @@ export function Component() {
       formats: [Format.QRCode],
       windowed: false,
     });
-
-    setAddDialogOpen(false);
     await sendRequest(scanned.content);
   }, [sendRequest]);
 
@@ -120,16 +150,32 @@ export function Component() {
               </DialogDescription>
             </DialogHeader>
 
+            <Input
+              type="text"
+              value={addDialogTicket}
+              onChange={(e) => setAddDialogTicket(e.target.value)}
+              placeholder="Contact Ticket"
+              disabled={addDialogIsLoading}
+              autoFocus={false}
+            />
+
             <DialogFooter>
               <Button
-                disabled
                 variant="outline"
-                onClick={onManualEntrySubmitted}
+                onClick={onScanClicked}
+                disabled={addDialogIsLoading}
               >
-                Enter Manually
+                Scan
               </Button>
 
-              <Button onClick={onScanClicked}>Scan</Button>
+              <Button
+                onClick={onManualEntrySubmitted}
+                disabled={
+                  addDialogIsLoading || addDialogTicket.trim().length === 0
+                }
+              >
+                Send
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
