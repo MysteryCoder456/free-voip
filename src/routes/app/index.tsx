@@ -95,7 +95,7 @@ export function Component() {
 
       // Update contacts list
       try {
-        await invoke("add_contact", { contactRequest });
+        await invoke("add_contact", { contactTicket: contactRequest });
       } catch (error) {
         console.error("Unable to add contact", error);
 

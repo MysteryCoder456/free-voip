@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { Format, scan } from "@tauri-apps/plugin-barcode-scanner";
 import { Loader, PhoneCall, Plus, VideoIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -76,7 +77,11 @@ export function Component() {
     }
   }, []);
   useEffect(() => {
+    // Fetch contacts and listen for changes
     fetchContacts();
+    listen<Contact[]>("contacts-updated", (event) => {
+      setContacts(event.payload);
+    });
   }, [fetchContacts]);
 
   const sendRequest = useCallback(async (serializedTicket: string) => {

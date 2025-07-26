@@ -179,9 +179,32 @@ fn get_contacts(app_handle: AppHandle) -> Result<Vec<ContactTicket>, String> {
 }
 
 #[tauri::command]
-fn add_contact(contact_ticket: ContactTicket) -> Result<(), String> {
-    // TODO: implement
-    Err("Not yet implemented".to_owned())
+fn add_contact(app_handle: AppHandle, contact_ticket: ContactTicket) -> Result<(), String> {
+    let mut contacts = get_contacts(app_handle.clone())?;
+
+    // Check for duplicates
+    let duplicate_contact = contacts
+        .iter()
+        .find(|c| c.node_id == contact_ticket.node_id);
+    if let Some(duplicate_contact) = duplicate_contact {
+        return Err(format!(
+            "This contact is already in your list as {}.",
+            duplicate_contact.nickname
+        ));
+    }
+
+    // Update contacts store
+    contacts.push(contact_ticket);
+    let contacts_store = app_handle
+        .store("contacts.json")
+        .map_err(|e| e.to_string())?;
+    contacts_store.set(
+        "contacts",
+        serde_json::to_value(&contacts).map_err(|e| e.to_string())?,
+    );
+    _ = app_handle.emit("contacts-updated", &contacts);
+
+    Ok(())
 }
 
 #[tauri::command]
