@@ -67,9 +67,11 @@ impl ContactsProtocol {
             .write(serialized_ticket.as_bytes())
             .await
             .map_err(|e| e.to_string())?;
+        proto_tx.finish().map_err(|e| e.to_string())?;
 
         // Listen for accept/decline response
         let response = proto_rx.read_u8().await.map_err(|e| e.to_string())?;
+        connection.close(0u32.into(), b"Contact request complete");
         Ok(response == RESPONSE_ACCEPT)
     }
 }

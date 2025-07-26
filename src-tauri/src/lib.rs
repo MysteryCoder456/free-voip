@@ -164,7 +164,7 @@ fn get_contacts(app_handle: AppHandle) -> Result<Vec<ContactTicket>, String> {
 async fn send_contact_request(
     serialized_ticket: String,
     app_state: State<'_, AppState>,
-) -> Result<bool, String> {
+) -> Result<(String, bool), String> {
     let contact_ticket =
         <ContactTicket as Ticket>::deserialize(&serialized_ticket).map_err(|e| e.to_string())?;
     println!("Sending contact request to {:?}", contact_ticket);
@@ -177,7 +177,10 @@ async fn send_contact_request(
         .map(|c| c.self_ticket.clone())
         .ok_or("Credentials not found")?;
 
-    ContactsProtocol::send_request(router.endpoint(), contact_ticket.node_id, self_ticket).await
+    let accepted =
+        ContactsProtocol::send_request(router.endpoint(), contact_ticket.node_id, self_ticket)
+            .await?;
+    Ok((contact_ticket.nickname, accepted))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
