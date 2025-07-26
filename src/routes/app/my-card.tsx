@@ -1,8 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Loader } from "lucide-react";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { Copy, Loader } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface SerializedTicketResponse {
   nickname: string;
@@ -30,19 +32,47 @@ export function Component() {
     fetchSelfTicket();
   }, [fetchSelfTicket]);
 
+  const onCopyClicked = useCallback(async () => {
+    if (!selfTicket) return;
+
+    try {
+      await writeText(selfTicket.serializedTicket);
+      toast.success("Contact ticket copied to clipboard");
+    } catch (error) {
+      console.error("Unable to copy contact ticket to clipboard", error);
+
+      if (typeof error === "string") {
+        toast.error("Unable to copy contact ticket to clipboard", {
+          description: error,
+        });
+      }
+    }
+  }, [selfTicket]);
+
   return (
     <div className="size-full">
       <h2 className="w-full">My Contact Card</h2>
 
       <div className="size-full flex flex-col justify-center-safe items-center-safe">
-        <div className="w-[70%] xs:w-[50%] aspect-square place-content-center">
+        <div className="w-[70%] xs:w-[50%] aspect-square place-content-center text-center">
           {selfTicket ? (
             <div>
               <QRCode
                 value={selfTicket.serializedTicket}
-                className="p-2 size-full bg-white"
+                className="p-2 mb-4 size-full bg-white"
               />
-              <p className="mt-4 text-center text-2xl">{selfTicket.nickname}</p>
+
+              <p className="text-xl">{selfTicket.nickname}</p>
+
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground text-sm truncate">
+                  {selfTicket.serializedTicket}
+                </span>
+
+                <Button variant="ghost" onClick={onCopyClicked}>
+                  <Copy />
+                </Button>
+              </div>
             </div>
           ) : (
             <Loader className="animate-spin mx-auto" />

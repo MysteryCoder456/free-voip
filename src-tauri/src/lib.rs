@@ -183,6 +183,7 @@ async fn send_contact_request(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .setup(|app| {
@@ -205,6 +206,7 @@ pub fn run() {
             login,
             get_serialized_self_ticket,
             get_contacts,
+            send_contact_request,
         ]);
 
     #[cfg(any(target_os = "android", target_os = "ios"))]
