@@ -41,6 +41,8 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>Scan contact QR codes</string>
+	<string>Scan contact QR codes and stream video during calls</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Stream audio during calls</string>
 </dict>
 </plist>

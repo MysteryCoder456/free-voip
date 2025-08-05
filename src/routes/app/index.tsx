@@ -1,8 +1,10 @@
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import clsx from "clsx";
 import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Outlet, type To, useLocation } from "react-router";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,8 +20,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import { invoke } from "@tauri-apps/api/core";
-import { toast } from "sonner";
 
 interface ContactRequest {
   nickname: string;

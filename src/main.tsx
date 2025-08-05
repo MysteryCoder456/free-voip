@@ -35,7 +35,16 @@ const router = createBrowserRouter([
           },
           {
             path: "contacts-list",
-            lazy: () => import("./routes/app/contacts-list"),
+            children: [
+              {
+                index: true,
+                lazy: () => import("./routes/app/contacts-list"),
+              },
+              {
+                path: "call",
+                lazy: () => import("./routes/app/contacts-list/call"),
+              },
+            ],
           },
         ],
       },

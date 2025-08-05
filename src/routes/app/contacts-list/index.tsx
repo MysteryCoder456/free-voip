@@ -1,8 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Format, scan } from "@tauri-apps/plugin-barcode-scanner";
-import { Loader, PhoneCall, Plus, VideoIcon } from "lucide-react";
+import { Loader, Plus, VideoIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,19 +37,18 @@ function ContactCard({
       </div>
 
       <div className="flex flex-row gap-2">
-        <Button
-          onClick={() => {
-            // TODO: implement
-          }}
-        >
-          <PhoneCall />
-        </Button>
-        <Button
-          onClick={() => {
-            // TODO: implement
-          }}
-        >
-          <VideoIcon />
+        {/* <Button */}
+        {/*   onClick={() => { */}
+        {/*     // TODO: implement */}
+        {/*   }} */}
+        {/* > */}
+        {/*   <PhoneCall /> */}
+        {/* </Button> */}
+
+        <Button asChild>
+          <Link to={`call?nickname=${nickname}&nodeId=${nodeId}`}>
+            <VideoIcon />
+          </Link>
         </Button>
       </div>
     </div>
