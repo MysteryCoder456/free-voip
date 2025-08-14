@@ -212,8 +212,8 @@ async fn send_contact_request(
     serialized_ticket: String,
     app_state: State<'_, AppState>,
 ) -> Result<(ContactTicket, bool), String> {
-    let contact_ticket =
-        <ContactTicket as Ticket>::deserialize(&serialized_ticket).map_err(|e| e.to_string())?;
+    let contact_ticket = <ContactTicket as Ticket>::deserialize(&serialized_ticket)
+        .map_err(|_e| "Invalid contact ticket")?;
     println!("Sending contact request to {:?}", contact_ticket);
 
     let app_state = app_state.read().await;
@@ -248,7 +248,7 @@ async fn respond_to_contact_request(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default()
+    tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
@@ -275,12 +275,7 @@ pub fn run() {
             add_contact,
             send_contact_request,
             respond_to_contact_request,
-        ]);
-
-    #[cfg(any(target_os = "android", target_os = "ios"))]
-    let builder = builder.plugin(tauri_plugin_barcode_scanner::init());
-
-    builder
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

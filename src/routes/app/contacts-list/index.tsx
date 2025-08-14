@@ -1,8 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { Format, scan } from "@tauri-apps/plugin-barcode-scanner";
 import { Loader, Plus, VideoIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import QrScanner from "qr-scanner";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ interface Contact {
   nodeId: string;
 }
 
-function ContactCard({
+function ContactItem({
   nickname,
   nodeId,
 }: {
@@ -55,13 +55,169 @@ function ContactCard({
   );
 }
 
+function AddContactDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const [ticket, setTicket] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [qrScanner, setQrScanner] = useState<QrScanner>();
+
+  // Stop scanning for QR codes when component unmounts
+  useEffect(() => {
+    if (!open) {
+      qrScanner?.destroy();
+      setQrScanner(undefined);
+    }
+  }, [open, qrScanner]);
+
+  // Start/stop QR scanner based on loading status
+  // }, [isLoading, qrScanner?.stop, qrScanner?.start]);
+  useEffect(() => {
+    if (isLoading) {
+      qrScanner?.stop();
+    } else {
+      qrScanner?.start();
+    }
+  }, [isLoading, qrScanner]);
+
+  const sendRequest = useCallback(
+    async (serializedTicket: string) => {
+      setIsLoading(true);
+
+      try {
+        const [contact, accepted] = await invoke<[Contact, boolean]>(
+          "send_contact_request",
+          {
+            serializedTicket,
+          },
+        );
+
+        if (accepted) {
+          // Accepted
+          toast.success(`${contact.nickname} accepted your contact request`);
+          onOpenChange(false);
+          setTicket("");
+
+          // Update contacts list
+          try {
+            await invoke("add_contact", { contactTicket: contact });
+          } catch (error) {
+            console.error("Unable to add contact", error);
+
+            if (typeof error === "string") {
+              toast.error("Unable to add contact", {
+                description: error,
+              });
+            }
+          }
+        } else {
+          // Rejected
+          toast.warning(`${contact.nickname} rejected your contact request`);
+        }
+      } catch (error) {
+        console.error("Unable to send contact request", error);
+
+        if (typeof error === "string") {
+          toast.error("Unable to send contact request", {
+            description: error,
+          });
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [onOpenChange],
+  );
+
+  const onManualEntrySubmitted = useCallback(async () => {
+    const trimmedTicket = ticket.trim();
+    if (trimmedTicket.length === 0) return false;
+    await sendRequest(trimmedTicket);
+  }, [sendRequest, ticket]);
+
+  const onScanClicked = useCallback(() => {
+    if (!videoRef.current) return;
+
+    const qrScanner = new QrScanner(
+      videoRef.current,
+      (result) => {
+        qrScanner.stop();
+        sendRequest(result.data);
+      },
+      {
+        preferredCamera: "environment",
+        highlightCodeOutline: true,
+        maxScansPerSecond: 1,
+      },
+    );
+
+    qrScanner.start();
+    setQrScanner(qrScanner);
+  }, [sendRequest]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <Plus />
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Contact</DialogTitle>
+          <DialogDescription>
+            Add a new contact by scanning a <b>Contact Ticket</b> or by entering
+            one manually.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Input
+          type="text"
+          value={ticket}
+          onChange={(e) => setTicket(e.target.value)}
+          placeholder="Contact Ticket"
+          disabled={isLoading}
+          autoFocus={false}
+        />
+
+        {/** biome-ignore lint/a11y/useMediaCaption: Renderer for QR scanner */}
+        <video
+          ref={videoRef}
+          className={qrScanner ? "size-auto" : "size-0"}
+        ></video>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={onScanClicked}
+            disabled={isLoading}
+          >
+            Scan
+          </Button>
+
+          <Button
+            onClick={onManualEntrySubmitted}
+            disabled={isLoading || ticket.trim().length === 0}
+          >
+            Send
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function Component() {
   const [isLoading, setIsLoading] = useState(true);
   const [contacts, setContacts] = useState<Contact[]>([]);
-
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [addDialogTicket, setAddDialogTicket] = useState<string>("");
-  const [addDialogIsLoading, setAddDialogIsLoading] = useState(false);
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -84,117 +240,15 @@ export function Component() {
     });
   }, [fetchContacts]);
 
-  const sendRequest = useCallback(async (serializedTicket: string) => {
-    setAddDialogIsLoading(true);
-
-    try {
-      const [contact, accepted] = await invoke<[Contact, boolean]>(
-        "send_contact_request",
-        {
-          serializedTicket,
-        },
-      );
-
-      if (accepted) {
-        // Accepted
-        toast.success(`${contact.nickname} accepted your contact request`);
-        setAddDialogOpen(false);
-        setAddDialogTicket("");
-
-        // Update contacts list
-        try {
-          await invoke("add_contact", { contactTicket: contact });
-        } catch (error) {
-          console.error("Unable to add contact", error);
-
-          if (typeof error === "string") {
-            toast.error("Unable to add contact", {
-              description: error,
-            });
-          }
-        }
-      } else {
-        // Rejected
-        toast.warning(`${contact.nickname} rejected your contact request`);
-      }
-    } catch (error) {
-      console.error("Unable to send contact request", error);
-
-      if (typeof error === "string") {
-        toast.error("Unable to send contact request", {
-          description: error,
-        });
-      }
-    } finally {
-      setAddDialogIsLoading(false);
-    }
-  }, []);
-
-  const onManualEntrySubmitted = useCallback(async () => {
-    const trimmedTicket = addDialogTicket.trim();
-    if (trimmedTicket.length === 0) return false;
-    await sendRequest(trimmedTicket);
-  }, [sendRequest, addDialogTicket]);
-
-  const onScanClicked = useCallback(async () => {
-    const scanned = await scan({
-      cameraDirection: "back",
-      formats: [Format.QRCode],
-      windowed: false,
-    });
-    await sendRequest(scanned.content);
-  }, [sendRequest]);
-
   return (
     <div className="size-full">
       <h2 className="w-full flex flex-row justify-between">
         <span>Contacts</span>
 
-        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline">
-              <Plus />
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Contact</DialogTitle>
-              <DialogDescription>
-                Add a new contact by scanning a <b>Contact Ticket</b> or by
-                entering one manually.
-              </DialogDescription>
-            </DialogHeader>
-
-            <Input
-              type="text"
-              value={addDialogTicket}
-              onChange={(e) => setAddDialogTicket(e.target.value)}
-              placeholder="Contact Ticket"
-              disabled={addDialogIsLoading}
-              autoFocus={false}
-            />
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={onScanClicked}
-                disabled={addDialogIsLoading}
-              >
-                Scan
-              </Button>
-
-              <Button
-                onClick={onManualEntrySubmitted}
-                disabled={
-                  addDialogIsLoading || addDialogTicket.trim().length === 0
-                }
-              >
-                Send
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <AddContactDialog
+          open={addDialogOpen}
+          onOpenChange={setAddDialogOpen}
+        />
       </h2>
 
       {isLoading ? (
@@ -204,7 +258,7 @@ export function Component() {
       ) : (
         <div className="size-full flex flex-col gap-4 px-2 justify-start items-center-safe">
           {contacts.map((contact) => (
-            <ContactCard key={contact.nodeId} {...contact} />
+            <ContactItem key={contact.nodeId} {...contact} />
           ))}
         </div>
       )}
