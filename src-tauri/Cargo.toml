@@ -28,6 +28,9 @@ tauri-plugin-store = "2"
 iroh-base = { version = "0.90", features = ["ticket"] }
 postcard = "1.1"
 tauri-plugin-clipboard-manager = "2"
+gstreamer = "0.24"
+gstreamer-video = "0.24"
+gstreamer-audio = "0.24"
 
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
 tauri-plugin-barcode-scanner = "2"
