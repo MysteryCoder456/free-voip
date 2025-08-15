@@ -186,6 +186,13 @@ function AddContactDialog({
           autoFocus={false}
         />
 
+        {isLoading && (
+          <div className="flex flex-row text-muted-foreground mx-auto gap-2 text-sm items-center">
+            <Loader className="animate-spin size-5" />
+            <span>Waiting for response...</span>
+          </div>
+        )}
+
         {/** biome-ignore lint/a11y/useMediaCaption: Renderer for QR scanner */}
         <video
           ref={videoRef}
