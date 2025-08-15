@@ -41,6 +41,7 @@ export function Component() {
     const stream = await getMediaStream();
     setCurrentStream(stream);
     videoRef.current.srcObject = stream;
+    videoRef.current.play();
 
     // TODO: connect to peer
   }, [videoRef, audioRef]);
@@ -51,7 +52,11 @@ export function Component() {
 
   return (
     <>
-      <video className="size-full absolute top-0 left-0" ref={videoRef} />
+      <video
+        className="size-full absolute top-0 left-0 -z-50"
+        ref={videoRef}
+        muted
+      />
       <audio className="absolute opacity-0" ref={audioRef} />
 
       <div className="size-full">
