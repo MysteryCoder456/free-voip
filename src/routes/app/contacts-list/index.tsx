@@ -153,7 +153,6 @@ function AddContactDialog({
       {
         preferredCamera: "environment",
         highlightCodeOutline: true,
-        maxScansPerSecond: 1,
       },
     );
 
