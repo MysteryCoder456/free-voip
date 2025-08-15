@@ -1,14 +1,23 @@
 /** biome-ignore-all lint/a11y/useMediaCaption: Not applicable for a video call */
 import { SwitchCamera } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
+
+function getMediaStream(): Promise<MediaStream> {
+  return navigator.mediaDevices.getUserMedia({
+    video: true,
+    audio: true,
+  });
+}
 
 export function Component() {
   const [searchParams, _] = useSearchParams();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const [currentStream, setCurrentStream] = useState<MediaStream>();
 
   const contact: { nickname: string; nodeId: string } = useMemo(() => {
     const nickname = searchParams.get("nickname");
@@ -28,7 +37,11 @@ export function Component() {
     // Make sure refs are set
     if (!videoRef.current || !audioRef.current) return;
 
-    // TODO: Create and listen to media stream
+    // Create and listen to media stream
+    const stream = await getMediaStream();
+    setCurrentStream(stream);
+    videoRef.current.srcObject = stream;
+
     // TODO: connect to peer
   }, [videoRef, audioRef]);
 
@@ -42,7 +55,7 @@ export function Component() {
       <audio className="absolute opacity-0" ref={audioRef} />
 
       <div className="size-full">
-        <h1 className="w-full flex flex-row justify-between">
+        <h2 className="w-full flex flex-row justify-between">
           <span>Calling {contact.nickname}</span>
 
           <div className="flex flex-row">
@@ -50,7 +63,7 @@ export function Component() {
               <SwitchCamera className="size-8" />
             </Button>
           </div>
-        </h1>
+        </h2>
       </div>
     </>
   );
