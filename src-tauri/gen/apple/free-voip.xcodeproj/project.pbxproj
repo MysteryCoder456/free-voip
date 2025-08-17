@@ -16,7 +16,6 @@
 		35BE03CFF90E5E26E6C496C5 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BA746A2082DA40B654248F52 /* QuartzCore.framework */; };
 		49C5216BD115D38A39D127FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4BF4B4E18DC143F816858B54 /* LaunchScreen.storyboard */; };
 		58C9C59E67AF63A6CE24F000 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 65EA1ACA5B7424AAD7CCF697 /* main.mm */; };
-		63E6FAC5B24D34E321262718 /* libapp.a in Resources */ = {isa = PBXBuildFile; fileRef = 99A2073E4D5CC1B0F46C4632 /* libapp.a */; };
 		7C76C9917B1044306BEA53AA /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6D02C4DD9A8E2D1D2D5368E4 /* UIKit.framework */; };
 		8BA2E792721A43850B2A88E7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E68350E8942F054406611C2A /* Assets.xcassets */; };
 		AB371582830DB47873F851E4 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A930556A90A88E9BC6487A96 /* WebKit.framework */; };
@@ -183,6 +182,7 @@
 				05941D0D71D795A934424322 /* Build Rust Code */,
 				244CA75DA83FE8C3C8B7B7A0 /* Sources */,
 				C668A8100959B1B40A8651F8 /* Resources */,
+				345E0B4B2E51A4B50011D5BE /* ShellScript */,
 				3BDCBF2EFA2ACD1980FBF995 /* Frameworks */,
 			);
 			buildRules = (
@@ -231,7 +231,6 @@
 				8BA2E792721A43850B2A88E7 /* Assets.xcassets in Resources */,
 				49C5216BD115D38A39D127FF /* LaunchScreen.storyboard in Resources */,
 				DBBC3C1E8F78DEDD628448E9 /* assets in Resources */,
-				63E6FAC5B24D34E321262718 /* libapp.a in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,6 +257,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "cargo tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}\n";
+		};
+		345E0B4B2E51A4B50011D5BE /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Copy libapp.a only in Debug builds\nif [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  cp \"${SRCROOT}/Externals/arm64/debug/libapp.a\" \"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

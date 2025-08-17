@@ -17,7 +17,7 @@ export function Component() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const [currentStream, setCurrentStream] = useState<MediaStream>();
+  const [_currentStream, setCurrentStream] = useState<MediaStream>();
 
   const contact: { nickname: string; nodeId: string } = useMemo(() => {
     const nickname = searchParams.get("nickname");
