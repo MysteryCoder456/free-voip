@@ -1,9 +1,9 @@
 /** biome-ignore-all lint/a11y/useMediaCaption: Not applicable for a video call */
 import { SwitchCamera } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Draggable from "react-draggable";
 import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
-import Draggable from "react-draggable";
 
 function getMediaStream(): Promise<MediaStream> {
   return navigator.mediaDevices.getUserMedia({
@@ -54,31 +54,29 @@ export function Component() {
 
   return (
     <>
-      <video
-        className="size-full absolute top-0 left-0 -z-50"
-        ref={otherVideoRef}
-        muted
-      />
-      <audio className="absolute opacity-0" ref={audioRef} />
-
       <Draggable nodeRef={selfVideoRef} bounds="body">
         <video
-          className="w-28 aspect-[3/4] bg-secondary rounded-xl absolute right-4 bottom-4"
+          className="w-auto h-36 bg-secondary rounded-xl absolute right-4 bottom-4 z-10"
           ref={selfVideoRef}
           muted
         />
       </Draggable>
 
-      <div className="size-full">
-        <h2 className="w-full flex flex-row justify-between">
-          <span>Calling {contact.nickname}</span>
+      <div className="size-full flex flex-col gap-4">
+        <video
+          className="grow flex relative bg-secondary rounded-xl"
+          ref={otherVideoRef}
+          muted
+        />
+        <audio className="absolute opacity-0" ref={audioRef} />
 
-          <div className="flex flex-row">
+        <div className="backdrop-blur-sm rounded-xl border-secondary border-1">
+          <div className="flex flex-row justify-center p-2">
             <Button variant="ghost">
-              <SwitchCamera className="size-8" />
+              <SwitchCamera />
             </Button>
           </div>
-        </h2>
+        </div>
       </div>
     </>
   );
