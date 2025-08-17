@@ -3,6 +3,7 @@ import { SwitchCamera } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
+import Draggable from "react-draggable";
 
 function getMediaStream(): Promise<MediaStream> {
   return navigator.mediaDevices.getUserMedia({
@@ -14,7 +15,9 @@ function getMediaStream(): Promise<MediaStream> {
 export function Component() {
   const [searchParams, _] = useSearchParams();
   const navigate = useNavigate();
-  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const selfVideoRef = useRef<HTMLVideoElement>(null);
+  const otherVideoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [_currentStream, setCurrentStream] = useState<MediaStream>();
@@ -32,19 +35,18 @@ export function Component() {
     return { nickname, nodeId };
   }, [searchParams, navigate]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Need to run when refs are set
   const startCall = useCallback(async () => {
     // Make sure refs are set
-    if (!videoRef.current || !audioRef.current) return;
+    if (!selfVideoRef.current || !audioRef.current) return;
 
     // Create and listen to media stream
     const stream = await getMediaStream();
     setCurrentStream(stream);
-    videoRef.current.srcObject = stream;
-    videoRef.current.play();
+    selfVideoRef.current.srcObject = stream;
+    selfVideoRef.current.play();
 
     // TODO: connect to peer
-  }, [videoRef, audioRef]);
+  }, []);
 
   useEffect(() => {
     startCall();
@@ -54,10 +56,18 @@ export function Component() {
     <>
       <video
         className="size-full absolute top-0 left-0 -z-50"
-        ref={videoRef}
+        ref={otherVideoRef}
         muted
       />
       <audio className="absolute opacity-0" ref={audioRef} />
+
+      <Draggable nodeRef={selfVideoRef} bounds="body">
+        <video
+          className="w-28 aspect-[3/4] bg-secondary rounded-xl absolute right-4 bottom-4"
+          ref={selfVideoRef}
+          muted
+        />
+      </Draggable>
 
       <div className="size-full">
         <h2 className="w-full flex flex-row justify-between">
