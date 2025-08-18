@@ -37,14 +37,6 @@ function ContactItem({
       </div>
 
       <div className="flex flex-row gap-2">
-        {/* <Button */}
-        {/*   onClick={() => { */}
-        {/*     // TODO: implement */}
-        {/*   }} */}
-        {/* > */}
-        {/*   <PhoneCall /> */}
-        {/* </Button> */}
-
         <Button asChild>
           <Link to={`call?nickname=${nickname}&nodeId=${nodeId}`}>
             <VideoIcon />

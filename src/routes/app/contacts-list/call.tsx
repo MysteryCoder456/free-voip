@@ -1,6 +1,13 @@
 /** biome-ignore-all lint/a11y/useMediaCaption: Not applicable for a video call */
-import { Phone, SwitchCamera } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  Mic,
+  MicOff,
+  Phone,
+  SwitchCamera,
+  Video,
+  VideoOff,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Draggable from "react-draggable";
 import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -23,6 +30,9 @@ export function Component() {
   const selfVideoRef = useRef<HTMLVideoElement>(null);
   const peerVideoRef = useRef<HTMLVideoElement>(null);
   const peerAudioRef = useRef<HTMLAudioElement>(null);
+
+  const [isSelfVideoOn, setIsSelfVideoOn] = useState<boolean>(true);
+  const [isSelfAudioOn, setIsSelfAudioOn] = useState<boolean>(true);
 
   const supportsCameraSwitching = useMemo(
     () => navigator.mediaDevices.getSupportedConstraints().facingMode === true,
@@ -99,6 +109,16 @@ export function Component() {
     navigate(-1);
   }, [cleanUpMediaStream, navigate]);
 
+  const toggleSelfVideo = useCallback(() => {
+    // TODO: implement in netcode
+    setIsSelfVideoOn((prev) => !prev);
+  }, []);
+
+  const toggleSelfAudio = useCallback(() => {
+    // TODO: implement in netcode
+    setIsSelfAudioOn((prev) => !prev);
+  }, []);
+
   useEffect(() => {
     startCall();
   }, [startCall]);
@@ -122,17 +142,30 @@ export function Component() {
           muted
         />
 
-        <div className="backdrop-blur-sm rounded-xl border-secondary border-1 z-20">
-          <div className="flex flex-row justify-center p-2 gap-2">
+        <div className="backdrop-blur-sm rounded-xl border-secondary border-1 z-20 flex flex-row justify-center items-center gap-4 p-2">
+          {/* Left Group */}
+          <div className="flex flex-1 flex-row justify-end gap-2">
+            <Button variant="ghost" onClick={toggleSelfVideo}>
+              {isSelfAudioOn ? <MicOff /> : <Mic />}
+            </Button>
+          </div>
+
+          {/* Hang Up Button */}
+          <Button variant="destructive" className="flex-none" onClick={hangUp}>
+            <Phone className="m-2" />
+          </Button>
+
+          {/* Right Group */}
+          <div className="flex flex-1 flex-row justify-start gap-2">
+            <Button variant="ghost" onClick={toggleSelfVideo}>
+              {isSelfVideoOn ? <VideoOff /> : <Video />}
+            </Button>
             <Button
               variant="ghost"
               onClick={flipCamera}
               disabled={!supportsCameraSwitching}
             >
               <SwitchCamera />
-            </Button>
-            <Button variant="destructive" onClick={hangUp}>
-              <Phone />
             </Button>
           </div>
         </div>
