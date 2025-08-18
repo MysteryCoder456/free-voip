@@ -26,6 +26,8 @@ interface ContactRequest {
   nodeId: string;
 }
 
+const showNavigationIn = new Set(["/app/my-card", "/app/contacts-list"]);
+
 function NavLink({
   to,
   icon,
@@ -67,9 +69,15 @@ function NavLink({
 }
 
 export function Component() {
+  const location = useLocation();
   const [contactRequest, setContactRequest] = useState<
     ContactRequest | undefined
   >(undefined);
+
+  const showNavigation = useMemo(
+    () => showNavigationIn.has(location.pathname),
+    [location.pathname],
+  );
 
   useEffect(() => {
     listen<ContactRequest>("contact-request", (event) => {
@@ -111,20 +119,26 @@ export function Component() {
 
   return (
     <>
-      <div className="size-full flex flex-col">
-        <div className="grow flex justify-center-safe items-center-safe mb-6">
+      <div className="size-full flex flex-col gap-6">
+        <div className="grow flex justify-center-safe items-center-safe">
           <Outlet />
         </div>
 
-        <NavigationMenu
-          viewport={false}
-          className="max-w-full max-h-max sticky bottom-3 backdrop-blur-sm rounded-xl border-secondary border-1"
-        >
-          <NavigationMenuList className="gap-4 my-2">
-            <NavLink to="/app/my-card" icon="qr-code" label="My Card" />
-            <NavLink to="/app/contacts-list" icon="contact" label="Contacts" />
-          </NavigationMenuList>
-        </NavigationMenu>
+        {showNavigation && (
+          <NavigationMenu
+            viewport={false}
+            className="max-w-full max-h-max sticky bottom-3 backdrop-blur-sm rounded-xl border-secondary border-1"
+          >
+            <NavigationMenuList className="gap-4 my-2">
+              <NavLink to="/app/my-card" icon="qr-code" label="My Card" />
+              <NavLink
+                to="/app/contacts-list"
+                icon="contact"
+                label="Contacts"
+              />
+            </NavigationMenuList>
+          </NavigationMenu>
+        )}
       </div>
 
       <Dialog

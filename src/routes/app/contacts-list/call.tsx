@@ -56,7 +56,7 @@ export function Component() {
     <>
       <Draggable nodeRef={selfVideoRef} bounds="body">
         <video
-          className="w-auto h-36 bg-secondary rounded-xl absolute right-4 bottom-4 z-10"
+          className="w-auto h-36 bg-secondary rounded-xl shadow-xl absolute right-4 bottom-4 z-10"
           ref={selfVideoRef}
           muted
         />
