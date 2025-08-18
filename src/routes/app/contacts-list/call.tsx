@@ -1,14 +1,18 @@
 /** biome-ignore-all lint/a11y/useMediaCaption: Not applicable for a video call */
-import { SwitchCamera } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Phone, SwitchCamera } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import Draggable from "react-draggable";
 import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 
 function getMediaStream(): Promise<MediaStream> {
   return navigator.mediaDevices.getUserMedia({
-    video: true,
-    audio: true,
+    video: {
+      facingMode: "user",
+    },
+    audio: {
+      echoCancellation: true,
+    },
   });
 }
 
@@ -17,10 +21,13 @@ export function Component() {
   const navigate = useNavigate();
 
   const selfVideoRef = useRef<HTMLVideoElement>(null);
-  const otherVideoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const peerVideoRef = useRef<HTMLVideoElement>(null);
+  const peerAudioRef = useRef<HTMLAudioElement>(null);
 
-  const [_currentStream, setCurrentStream] = useState<MediaStream>();
+  const supportsCameraSwitching = useMemo(
+    () => navigator.mediaDevices.getSupportedConstraints().facingMode === true,
+    [],
+  );
 
   const contact: { nickname: string; nodeId: string } = useMemo(() => {
     const nickname = searchParams.get("nickname");
@@ -35,18 +42,62 @@ export function Component() {
     return { nickname, nodeId };
   }, [searchParams, navigate]);
 
-  const startCall = useCallback(async () => {
-    // Make sure refs are set
-    if (!selfVideoRef.current || !audioRef.current) return;
+  const cleanUpMediaStream = useCallback((mediaElement: HTMLMediaElement) => {
+    mediaElement.pause();
+    const stream = mediaElement.srcObject as MediaStream | null;
+    stream?.getTracks().forEach((t) => t.stop());
+    mediaElement.srcObject = null;
+  }, []);
 
+  const startCall = useCallback(async () => {
     // Create and listen to media stream
-    const stream = await getMediaStream();
-    setCurrentStream(stream);
-    selfVideoRef.current.srcObject = stream;
-    selfVideoRef.current.play();
+    if (selfVideoRef.current) {
+      const stream = await getMediaStream();
+      selfVideoRef.current.srcObject = stream;
+      await selfVideoRef.current.play();
+    }
 
     // TODO: connect to peer
-  }, []);
+
+    // Clean up media streams when the component unmounts
+    return () => {
+      // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
+      cleanUpMediaStream(selfVideoRef.current!);
+      // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
+      cleanUpMediaStream(peerVideoRef.current!);
+      // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
+      cleanUpMediaStream(peerAudioRef.current!);
+    };
+  }, [cleanUpMediaStream]);
+
+  const flipCamera = useCallback(async () => {
+    if (!supportsCameraSwitching) return;
+
+    const stream = selfVideoRef.current?.srcObject as MediaStream;
+    const videoTrack = stream?.getVideoTracks()[0];
+    if (!videoTrack) return;
+
+    const currentFacingMode = videoTrack.getConstraints().facingMode;
+    const newFacingMode = currentFacingMode === "user" ? "environment" : "user";
+    await videoTrack.applyConstraints({
+      facingMode: newFacingMode,
+    });
+    console.debug("🤳 Flipped camera!");
+  }, [supportsCameraSwitching]);
+
+  const hangUp = useCallback(() => {
+    // TODO: close connection with peer
+
+    // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
+    cleanUpMediaStream(selfVideoRef.current!);
+    // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
+    cleanUpMediaStream(peerVideoRef.current!);
+    // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
+    cleanUpMediaStream(peerAudioRef.current!);
+
+    // Leave call page
+    navigate(-1);
+  }, [cleanUpMediaStream, navigate]);
 
   useEffect(() => {
     startCall();
@@ -56,24 +107,32 @@ export function Component() {
     <>
       <Draggable nodeRef={selfVideoRef} bounds="body">
         <video
-          className="w-auto h-36 bg-secondary rounded-xl shadow-xl absolute right-4 bottom-4 z-10"
+          className="w-auto h-36 bg-secondary rounded-xl shadow-xl absolute right-4 top-4 z-10"
           ref={selfVideoRef}
           muted
         />
       </Draggable>
 
+      <audio className="absolute opacity-0 -z-50" ref={peerAudioRef} />
+
       <div className="size-full flex flex-col gap-4">
         <video
           className="grow flex relative bg-secondary rounded-xl"
-          ref={otherVideoRef}
+          ref={peerVideoRef}
           muted
         />
-        <audio className="absolute opacity-0" ref={audioRef} />
 
-        <div className="backdrop-blur-sm rounded-xl border-secondary border-1">
-          <div className="flex flex-row justify-center p-2">
-            <Button variant="ghost">
+        <div className="backdrop-blur-sm rounded-xl border-secondary border-1 z-20">
+          <div className="flex flex-row justify-center p-2 gap-2">
+            <Button
+              variant="ghost"
+              onClick={flipCamera}
+              disabled={!supportsCameraSwitching}
+            >
               <SwitchCamera />
+            </Button>
+            <Button variant="destructive" onClick={hangUp}>
+              <Phone />
             </Button>
           </div>
         </div>
