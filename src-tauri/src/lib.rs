@@ -1,3 +1,4 @@
+mod call;
 mod contacts;
 
 use std::ops::DerefMut;
@@ -9,11 +10,11 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_store::StoreExt;
 use tokio::sync::{
-    broadcast::{channel, Receiver, Sender},
+    broadcast::{channel, Sender},
     RwLock,
 };
 
-use crate::contacts::ContactsProtocol;
+use crate::{call::CallProtocol, contacts::ContactsProtocol};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -26,8 +27,7 @@ struct EndpointCredentials {
 struct AppStateInner {
     endpoint_credentials: Option<EndpointCredentials>,
     router: Option<Router>,
-    request_rx: Option<Receiver<ContactTicket>>,
-    response_tx: Option<Sender<bool>>,
+    contact_response_tx: Option<Sender<bool>>,
 }
 type AppState = RwLock<AppStateInner>;
 
@@ -55,13 +55,11 @@ fn build_router(
 ) -> Router {
     let contacts = {
         // Create and set protocol communication channels
-        let (request_tx, request_rx) = channel::<ContactTicket>(8);
+        let (request_tx, mut request_rx) = channel::<ContactTicket>(8);
         let (response_tx, response_rx) = channel::<bool>(8);
-        app_state.request_rx = Some(request_rx.resubscribe());
-        app_state.response_tx = Some(response_tx);
+        app_state.contact_response_tx = Some(response_tx);
 
         // Listen to requests
-        let mut request_rx = request_rx;
         tokio::spawn(async move {
             while let Ok(ticket) = request_rx.recv().await {
                 if let Err(e) = app_handle.emit("contact-request", ticket) {
@@ -70,11 +68,14 @@ fn build_router(
             }
         });
 
-        contacts::ContactsProtocol::new(request_tx, response_rx)
+        ContactsProtocol::new(request_tx, response_rx)
     };
+
+    let call = { CallProtocol };
 
     Router::builder(endpoint)
         .accept(contacts::ALPN, contacts)
+        .accept(call::ALPN, call)
         .spawn()
 }
 
@@ -237,7 +238,7 @@ async fn respond_to_contact_request(
 ) -> Result<(), String> {
     let app_state = app_state.read().await;
 
-    if let Some(response_tx) = &app_state.response_tx {
+    if let Some(response_tx) = &app_state.contact_response_tx {
         // Send the response to the contact request
         response_tx.send(accept).map_err(|e| e.to_string())?;
         Ok(())

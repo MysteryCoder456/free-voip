@@ -90,7 +90,6 @@ export function Component() {
       // Acknowledge the request
       try {
         await invoke("respond_to_contact_request", { accept });
-        setContactRequest(undefined);
       } catch (error) {
         console.error("Unable to respond to contact request", error);
 
@@ -102,17 +101,21 @@ export function Component() {
       }
 
       // Update contacts list
-      try {
-        await invoke("add_contact", { contactTicket: contactRequest });
-      } catch (error) {
-        console.error("Unable to add contact", error);
+      if (accept) {
+        try {
+          await invoke("add_contact", { contactTicket: contactRequest });
+        } catch (error) {
+          console.error("Unable to add contact", error);
 
-        if (typeof error === "string") {
-          toast.error("Unable to add contact", {
-            description: error,
-          });
+          if (typeof error === "string") {
+            toast.error("Unable to add contact", {
+              description: error,
+            });
+          }
         }
       }
+
+      setContactRequest(undefined);
     },
     [contactRequest],
   );
