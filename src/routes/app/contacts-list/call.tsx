@@ -145,7 +145,7 @@ export function Component() {
         <div className="backdrop-blur-sm rounded-xl border-secondary border-1 z-20 flex flex-row justify-center items-center gap-4 p-2">
           {/* Left Group */}
           <div className="flex flex-1 flex-row justify-end gap-2">
-            <Button variant="ghost" onClick={toggleSelfVideo}>
+            <Button variant="ghost" onClick={toggleSelfAudio}>
               {isSelfAudioOn ? <MicOff /> : <Mic />}
             </Button>
           </div>
