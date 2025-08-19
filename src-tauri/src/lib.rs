@@ -4,7 +4,7 @@ mod contacts;
 use std::ops::DerefMut;
 
 use contacts::ContactTicket;
-use iroh::{protocol::Router, Endpoint, SecretKey};
+use iroh::{protocol::Router, Endpoint, NodeId, SecretKey};
 use iroh_base::ticket::Ticket;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -247,6 +247,12 @@ async fn respond_to_contact_request(
     }
 }
 
+#[tauri::command]
+async fn ring_contact(node_addr: NodeId) -> Result<bool, String> {
+    // TODO: implement
+    Ok(false)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -276,6 +282,7 @@ pub fn run() {
             add_contact,
             send_contact_request,
             respond_to_contact_request,
+            ring_contact,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,4 +1,7 @@
 /** biome-ignore-all lint/a11y/useMediaCaption: Not applicable for a video call */
+
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import {
   Mic,
   MicOff,
@@ -10,6 +13,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Draggable from "react-draggable";
 import { useNavigate, useSearchParams } from "react-router";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 function getMediaStream(): Promise<MediaStream> {
@@ -58,17 +62,6 @@ export function Component() {
     mediaElement.srcObject = null;
   }, []);
 
-  const startCall = useCallback(async () => {
-    // Create and listen to media stream
-    if (selfVideoRef.current) {
-      const stream = await getMediaStream();
-      selfVideoRef.current.srcObject = stream;
-      await selfVideoRef.current.play();
-    }
-
-    // TODO: connect to peer
-  }, []);
-
   const flipCamera = useCallback(async () => {
     if (!supportsCameraSwitching) return;
 
@@ -87,10 +80,8 @@ export function Component() {
   const hangUp = useCallback(() => {
     // TODO: close connection with peer
 
-    // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
-    cleanUpMediaStream(selfVideoRef.current!);
-    // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
-    cleanUpMediaStream(peerVideoRef.current!);
+    if (selfVideoRef.current) cleanUpMediaStream(selfVideoRef.current);
+    if (peerVideoRef.current) cleanUpMediaStream(peerVideoRef.current);
 
     // Leave call page
     navigate(-1);
@@ -106,15 +97,36 @@ export function Component() {
     setIsSelfAudioOn((prev) => !prev);
   }, []);
 
+  const startCall = useCallback(async () => {
+    // Create and listen to media stream
+    if (selfVideoRef.current) {
+      const stream = await getMediaStream();
+      selfVideoRef.current.srcObject = stream;
+      await selfVideoRef.current.play();
+    }
+
+    // Ring peer
+    const response = await invoke<boolean>("ring_contact", {
+      nodeAddr: contact.nodeId,
+    });
+
+    if (response) {
+      listen("call_media", (event) => {
+        // TODO: handle incoming media stream
+      });
+    } else {
+      toast.warning(`${contact.nickname} didn't pick up the call`);
+      hangUp();
+    }
+  }, [contact, hangUp]);
+
   useEffect(() => {
     startCall();
 
     // Clean up media streams when the component unmounts
     return () => {
-      // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
-      cleanUpMediaStream(selfVideoRef.current!);
-      // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
-      cleanUpMediaStream(peerVideoRef.current!);
+      if (selfVideoRef.current) cleanUpMediaStream(selfVideoRef.current);
+      if (peerVideoRef.current) cleanUpMediaStream(peerVideoRef.current);
     };
   }, [startCall, cleanUpMediaStream]);
 
