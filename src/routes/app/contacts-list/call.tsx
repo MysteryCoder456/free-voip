@@ -29,7 +29,6 @@ export function Component() {
 
   const selfVideoRef = useRef<HTMLVideoElement>(null);
   const peerVideoRef = useRef<HTMLVideoElement>(null);
-  const peerAudioRef = useRef<HTMLAudioElement>(null);
 
   const [isSelfVideoOn, setIsSelfVideoOn] = useState<boolean>(true);
   const [isSelfAudioOn, setIsSelfAudioOn] = useState<boolean>(true);
@@ -75,8 +74,6 @@ export function Component() {
       cleanUpMediaStream(selfVideoRef.current!);
       // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
       cleanUpMediaStream(peerVideoRef.current!);
-      // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
-      cleanUpMediaStream(peerAudioRef.current!);
     };
   }, [cleanUpMediaStream]);
 
@@ -102,8 +99,6 @@ export function Component() {
     cleanUpMediaStream(selfVideoRef.current!);
     // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
     cleanUpMediaStream(peerVideoRef.current!);
-    // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
-    cleanUpMediaStream(peerAudioRef.current!);
 
     // Leave call page
     navigate(-1);
@@ -132,8 +127,6 @@ export function Component() {
           muted
         />
       </Draggable>
-
-      <audio className="absolute opacity-0 -z-50" ref={peerAudioRef} />
 
       <div className="size-full flex flex-col gap-4">
         <video
