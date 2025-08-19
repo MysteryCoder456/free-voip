@@ -160,11 +160,7 @@ export function Component() {
             <Button variant="ghost" onClick={toggleSelfVideo}>
               {isSelfVideoOn ? <VideoOff /> : <Video />}
             </Button>
-            <Button
-              variant="ghost"
-              onClick={flipCamera}
-              disabled={!supportsCameraSwitching}
-            >
+            <Button variant="ghost" onClick={toggleSelfAudio}>
               <SwitchCamera />
             </Button>
           </div>
