@@ -67,15 +67,7 @@ export function Component() {
     }
 
     // TODO: connect to peer
-
-    // Clean up media streams when the component unmounts
-    return () => {
-      // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
-      cleanUpMediaStream(selfVideoRef.current!);
-      // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
-      cleanUpMediaStream(peerVideoRef.current!);
-    };
-  }, [cleanUpMediaStream]);
+  }, []);
 
   const flipCamera = useCallback(async () => {
     if (!supportsCameraSwitching) return;
@@ -116,7 +108,15 @@ export function Component() {
 
   useEffect(() => {
     startCall();
-  }, [startCall]);
+
+    // Clean up media streams when the component unmounts
+    return () => {
+      // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
+      cleanUpMediaStream(selfVideoRef.current!);
+      // biome-ignore lint/style/noNonNullAssertion: Refs are guaranteed to be set
+      cleanUpMediaStream(peerVideoRef.current!);
+    };
+  }, [startCall, cleanUpMediaStream]);
 
   return (
     <>
