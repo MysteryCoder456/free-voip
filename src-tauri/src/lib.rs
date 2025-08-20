@@ -250,7 +250,14 @@ async fn respond_to_contact_request(
 #[tauri::command]
 async fn ring_contact(node_addr: NodeId) -> Result<bool, String> {
     // TODO: implement
-    Ok(false)
+    println!("Ringing {node_addr:?}");
+    Ok(true)
+}
+
+#[tauri::command]
+async fn send_call_media(data_type: &str, encoded_data: serde_json::Value) -> Result<(), String> {
+    // TODO: implement
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -283,6 +290,7 @@ pub fn run() {
             send_contact_request,
             respond_to_contact_request,
             ring_contact,
+            send_call_media,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

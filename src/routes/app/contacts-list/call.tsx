@@ -27,6 +27,8 @@ function getMediaStream(): Promise<MediaStream> {
   });
 }
 
+var encodeWorker: Worker | undefined;
+
 export function Component() {
   const [searchParams, _] = useSearchParams();
   const navigate = useNavigate();
@@ -88,36 +90,79 @@ export function Component() {
   }, [cleanUpMediaStream, navigate]);
 
   const toggleSelfVideo = useCallback(() => {
-    // TODO: implement in netcode
-    setIsSelfVideoOn((prev) => !prev);
+    setIsSelfVideoOn((prevValue) => {
+      if (!selfVideoRef.current) return prevValue;
+      const newValue = !prevValue;
+
+      const stream = selfVideoRef.current.srcObject as MediaStream;
+      const [videoTrack] = stream.getVideoTracks();
+      videoTrack.enabled = newValue;
+
+      return newValue;
+    });
   }, []);
 
   const toggleSelfAudio = useCallback(() => {
-    // TODO: implement in netcode
-    setIsSelfAudioOn((prev) => !prev);
+    setIsSelfAudioOn((prevValue) => {
+      if (!selfVideoRef.current) return prevValue;
+      const newValue = !prevValue;
+
+      const stream = selfVideoRef.current.srcObject as MediaStream;
+      const [audioTrack] = stream.getAudioTracks();
+      audioTrack.enabled = newValue;
+
+      return newValue;
+    });
   }, []);
 
   const startCall = useCallback(async () => {
+    if (!selfVideoRef.current) return;
+
     // Create and listen to media stream
-    if (selfVideoRef.current) {
-      const stream = await getMediaStream();
-      selfVideoRef.current.srcObject = stream;
-      await selfVideoRef.current.play();
-    }
+    const stream = await getMediaStream();
+    selfVideoRef.current.srcObject = stream;
+    await selfVideoRef.current.play();
 
     // Ring peer
     const response = await invoke<boolean>("ring_contact", {
       nodeAddr: contact.nodeId,
     });
 
-    if (response) {
-      listen("call_media", (event) => {
-        // TODO: handle incoming media stream
-      });
-    } else {
+    if (!response) {
       toast.warning(`${contact.nickname} didn't pick up the call`);
       hangUp();
+      return;
     }
+
+    // Listen for incoming media
+    listen("incoming_call_media", (event) => {
+      // TODO: handle incoming media stream
+    });
+
+    // TODO: Transmit self media to peer
+    const [videoTrack] = stream.getVideoTracks();
+    const [audioTrack] = stream.getAudioTracks();
+
+    encodeWorker = new Worker("/media-encode-worker.js");
+    encodeWorker.onmessage = (event) => {
+      const {
+        dataType,
+        encodedData,
+      }: {
+        dataType: "audio" | "video";
+        encodedData: any;
+      } = event.data;
+
+      // TODO: serialize encoded data properly
+      invoke("send_call_media", {
+        dataType,
+        encodedData,
+      });
+    };
+    encodeWorker.onerror = console.error;
+
+    // Start encoding!
+    encodeWorker.postMessage([videoTrack, audioTrack]);
   }, [contact, hangUp]);
 
   useEffect(() => {
@@ -127,6 +172,9 @@ export function Component() {
     return () => {
       if (selfVideoRef.current) cleanUpMediaStream(selfVideoRef.current);
       if (peerVideoRef.current) cleanUpMediaStream(peerVideoRef.current);
+
+      encodeWorker?.terminate();
+      encodeWorker = undefined;
     };
   }, [startCall, cleanUpMediaStream]);
 
