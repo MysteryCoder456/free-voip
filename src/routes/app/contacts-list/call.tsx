@@ -16,6 +16,12 @@ import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
+enum CallState {
+  Calling = "Calling",
+  Ringing = "Ringing",
+  InCall = "In Call",
+}
+
 function getMediaStream(): Promise<MediaStream> {
   return navigator.mediaDevices.getUserMedia({
     video: {
@@ -36,6 +42,7 @@ export function Component() {
   const selfVideoRef = useRef<HTMLVideoElement>(null);
   const peerVideoRef = useRef<HTMLVideoElement>(null);
 
+  const [callState, setCallState] = useState<CallState>(CallState.Calling);
   const [isSelfVideoOn, setIsSelfVideoOn] = useState<boolean>(true);
   const [isSelfAudioOn, setIsSelfAudioOn] = useState<boolean>(true);
 
@@ -124,9 +131,11 @@ export function Component() {
     await selfVideoRef.current.play();
 
     // Ring peer
+    setCallState(CallState.Ringing);
     const response = await invoke<boolean>("ring_contact", {
       nodeAddr: contact.nodeId,
     });
+    setCallState(CallState.InCall);
 
     if (!response) {
       toast.warning(`${contact.nickname} didn't pick up the call`);
@@ -189,11 +198,17 @@ export function Component() {
       </Draggable>
 
       <div className="size-full flex flex-col gap-4">
-        <video
-          className="grow flex relative bg-secondary rounded-xl"
-          ref={peerVideoRef}
-          muted
-        />
+        <div className="grow flex relative bg-secondary rounded-xl">
+          <video ref={peerVideoRef} muted />
+
+          {/* TODO: Hide this if peer's camera is on */}
+          <div className="absolute top-[50%] left-[50%] -translate-[50%] flex flex-col text-center">
+            <span className="text-xl font-medium">{contact.nickname}</span>
+            {callState !== CallState.InCall && (
+              <span className="text-muted-foreground">{callState}</span>
+            )}
+          </div>
+        </div>
 
         <div className="backdrop-blur-sm rounded-xl border-secondary border-1 z-20 flex flex-row justify-center items-center gap-4 p-2">
           {/* Left Group */}
