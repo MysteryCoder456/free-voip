@@ -8,7 +8,7 @@ const videoEncoder = new VideoEncoder({
    */
   output(chunk, _metadata) {
     // Send encoded video back to main thread
-    postMessage({ encodedData: chunk });
+    postMessage(chunk);
   },
   error(error) {
     console.error("Video encoding error:", error);

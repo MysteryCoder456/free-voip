@@ -31,6 +31,28 @@ struct AppStateInner {
 }
 type AppState = RwLock<AppStateInner>;
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(rename_all_fields = "camelCase")]
+enum CallMedia {
+    Video {
+        #[serde(rename = "type")]
+        frame_type: String,
+        timestamp: u64,
+        duration: Option<u64>,
+        byte_length: u64,
+        frame_data: Vec<u8>,
+    },
+    Audio {
+        #[serde(rename = "type")]
+        frame_type: String,
+        timestamp: u64,
+        duration: Option<u64>,
+        byte_length: u64,
+        frame_data: Vec<u8>,
+    },
+}
+
 async fn build_endpoint(
     secret_key: Option<SecretKey>,
 ) -> Result<Endpoint, iroh::endpoint::BindError> {
@@ -255,7 +277,7 @@ async fn ring_contact(node_addr: NodeId) -> Result<bool, String> {
 }
 
 #[tauri::command]
-async fn send_call_media(data_type: &str, encoded_data: serde_json::Value) -> Result<(), String> {
+async fn send_call_media(media: CallMedia) -> Result<(), String> {
     // TODO: implement
     Ok(())
 }

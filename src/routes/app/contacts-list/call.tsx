@@ -31,35 +31,41 @@ async function setupEncodePipeline(
 ) {
   videoEncodeWorker = new Worker("/video-encoder.js");
   videoEncodeWorker.onmessage = (event) => {
-    const {
-      encodedData,
-    }: {
-      encodedData: any;
-    } = event.data;
-    // console.debug(encodedData);
+    const videoChunk = event.data as EncodedVideoChunk;
 
-    // TODO: serialize encoded data properly
-    invoke("send_call_media", {
-      dataType: "video",
-      encodedData,
-    });
+    const dataBuffer = new ArrayBuffer(videoChunk.byteLength);
+    videoChunk.copyTo(dataBuffer);
+
+    const media = {
+      video: {
+        type: videoChunk.type,
+        timestamp: videoChunk.timestamp,
+        duration: videoChunk.duration,
+        byteLength: videoChunk.byteLength,
+        frameData: dataBuffer,
+      },
+    };
+    invoke("send_call_media", { media });
   };
   videoEncodeWorker.onerror = console.error;
 
   audioEncodeWorker = new Worker("/audio-encoder.js");
   audioEncodeWorker.onmessage = (event) => {
-    const {
-      encodedData,
-    }: {
-      encodedData: any;
-    } = event.data;
-    // console.debug(encodedData);
+    const audioChunk = event.data as EncodedAudioChunk;
 
-    // TODO: serialize encoded data properly
-    invoke("send_call_media", {
-      dataType: "audio",
-      encodedData,
-    });
+    const dataBuffer = new ArrayBuffer(audioChunk.byteLength);
+    audioChunk.copyTo(dataBuffer); // FIXME: not available on Apple platforms
+
+    const media = {
+      audio: {
+        type: audioChunk.type,
+        timestamp: audioChunk.timestamp,
+        duration: audioChunk.duration,
+        byteLength: audioChunk.byteLength,
+        frameData: dataBuffer,
+      },
+    };
+    invoke("send_call_media", { media });
   };
   audioEncodeWorker.onerror = console.error;
 
