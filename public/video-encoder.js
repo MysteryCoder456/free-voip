@@ -29,13 +29,22 @@ onmessage = (event) => {
   });
 
   const videoProcessor = new MediaStreamTrackProcessor({ track: videoTrack });
+  /** @type {ReadableStreamDefaultReader<VideoFrame>} */
   const videoReader = videoProcessor.readable.getReader();
 
   async function pumpVideo() {
+    const keyFrameInterval = 60; // frames
+    var frameCount = 0;
+
     while (true) {
       try {
         const { value, done } = await videoReader.read();
-        videoEncoder.encode(value);
+
+        videoEncoder.encode(value, {
+          keyFrame: frameCount % keyFrameInterval === 0,
+        });
+        frameCount = (frameCount + 1) % keyFrameInterval;
+
         value.close();
         if (done) break;
       } catch (error) {
