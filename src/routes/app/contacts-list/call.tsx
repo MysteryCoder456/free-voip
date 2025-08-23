@@ -22,6 +22,70 @@ enum CallState {
   InCall = "In Call",
 }
 
+var videoEncodeWorker: Worker | undefined;
+var audioEncodeWorker: Worker | undefined;
+
+async function setupEncodePipeline(
+  videoTrack: MediaStreamTrack,
+  audioTrack: MediaStreamTrack,
+) {
+  videoEncodeWorker = new Worker("/video-encoder.js");
+  videoEncodeWorker.onmessage = (event) => {
+    const {
+      encodedData,
+    }: {
+      encodedData: any;
+    } = event.data;
+    // console.debug(encodedData);
+
+    // TODO: serialize encoded data properly
+    invoke("send_call_media", {
+      dataType: "video",
+      encodedData,
+    });
+  };
+  videoEncodeWorker.onerror = console.error;
+
+  audioEncodeWorker = new Worker("/audio-encoder.js");
+  audioEncodeWorker.onmessage = (event) => {
+    const {
+      encodedData,
+    }: {
+      encodedData: any;
+    } = event.data;
+    // console.debug(encodedData);
+
+    // TODO: serialize encoded data properly
+    invoke("send_call_media", {
+      dataType: "audio",
+      encodedData,
+    });
+  };
+  audioEncodeWorker.onerror = console.error;
+
+  const audioCtx = new AudioContext();
+  await audioCtx.audioWorklet.addModule("/pcm-processor.js");
+
+  // Create PCM processor node and hook into output
+  // This should ideally only output silence
+  const pcmNode = new AudioWorkletNode(audioCtx, "pcm-processor");
+  pcmNode.port.onmessage = (event) => {
+    const pcm = event.data as Float32Array;
+    audioEncodeWorker?.postMessage(pcm);
+  };
+  pcmNode.connect(audioCtx.destination);
+
+  // Create audio input node and hook into PCM processor
+  const source = audioCtx.createMediaStreamSource(
+    new MediaStream([audioTrack]),
+  );
+  source.connect(pcmNode);
+
+  // Kick off workers
+  videoEncodeWorker.postMessage(videoTrack);
+  audioEncodeWorker.postMessage(audioTrack);
+}
+
 function getMediaStream(): Promise<MediaStream> {
   return navigator.mediaDevices.getUserMedia({
     video: {
@@ -32,9 +96,6 @@ function getMediaStream(): Promise<MediaStream> {
     },
   });
 }
-
-var videoEncodeWorker: Worker | undefined;
-var audioEncodeWorker: Worker | undefined;
 
 export function Component() {
   const [searchParams, _] = useSearchParams();
@@ -152,62 +213,7 @@ export function Component() {
     // Transmit self media to peer
     const [videoTrack] = stream.getVideoTracks();
     const [audioTrack] = stream.getAudioTracks();
-
-    // NOTE: Setup video pipeline
-    videoEncodeWorker = new Worker("/video-encoder.js");
-    videoEncodeWorker.onmessage = (event) => {
-      const {
-        encodedData,
-      }: {
-        encodedData: any;
-      } = event.data;
-      console.debug(encodedData);
-
-      // TODO: serialize encoded data properly
-      invoke("send_call_media", {
-        dataType: "video",
-        encodedData,
-      });
-    };
-    videoEncodeWorker.onerror = console.error;
-    videoEncodeWorker.postMessage(videoTrack);
-
-    // NOTE: Setup audio pipeline
-    audioEncodeWorker = new Worker("/audio-encoder.js");
-    audioEncodeWorker.onmessage = (event) => {
-      const {
-        encodedData,
-      }: {
-        encodedData: any;
-      } = event.data;
-      console.debug(encodedData);
-
-      // TODO: serialize encoded data properly
-      invoke("send_call_media", {
-        dataType: "audio",
-        encodedData,
-      });
-    };
-    audioEncodeWorker.onerror = console.error;
-    audioEncodeWorker.postMessage(audioTrack); // configure encoder
-
-    const audioCtx = new AudioContext();
-    await audioCtx.audioWorklet.addModule("/pcm-processor.js");
-
-    // Create PCM processor node and hook into output
-    // This should ideally only output silence
-    const pcmNode = new AudioWorkletNode(audioCtx, "pcm-processor");
-    pcmNode.port.onmessage = (event) => {
-      const pcm = event.data as Float32Array;
-      audioEncodeWorker?.postMessage(pcm);
-    };
-    pcmNode.connect(audioCtx.destination);
-
-    // Create audio input node and hook into PCM processor
-    const source = audioCtx.createMediaStreamSource(
-      new MediaStream([audioTrack]),
-    );
-    source.connect(pcmNode);
+    await setupEncodePipeline(videoTrack, audioTrack);
   }, [contact, hangUp]);
 
   useEffect(() => {
