@@ -10,7 +10,7 @@ const audioEncoder = new AudioEncoder({
    * @param {any} _metadata
    */
   output(chunk, _metadata) {
-    postMessage({ encodedData: chunk });
+    postMessage(chunk);
   },
   error(error) {
     console.error("Audio encoding error:", error);
