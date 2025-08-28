@@ -51,7 +51,7 @@ async function setupEncodePipeline(
 
   audioEncodeWorker = new Worker("/audio-encoder.js");
   audioEncodeWorker.onmessage = (event) => {
-    const audioChunk = event.data as EncodedAudioChunk;
+    const audioChunk = event.data;
 
     const dataBuffer = new ArrayBuffer(audioChunk.byteLength);
     audioChunk.copyTo(dataBuffer); // FIXME: not available on Apple platforms
@@ -212,7 +212,7 @@ export function Component() {
     }
 
     // Listen for incoming media
-    listen("incoming_call_media", (event) => {
+    listen("incoming_call_media", (_event) => {
       // TODO: handle incoming media stream
     });
 

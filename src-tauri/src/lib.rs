@@ -28,6 +28,7 @@ struct AppStateInner {
     endpoint_credentials: Option<EndpointCredentials>,
     router: Option<Router>,
     contact_response_tx: Option<Sender<bool>>,
+    ring_response_tx: Option<Sender<bool>>,
 }
 type AppState = RwLock<AppStateInner>;
 
@@ -81,7 +82,8 @@ fn build_router(
         let (response_tx, response_rx) = channel::<bool>(8);
         app_state.contact_response_tx = Some(response_tx);
 
-        // Listen to requests
+        // Listen to contact requests
+        let app_handle = app_handle.clone();
         tokio::spawn(async move {
             while let Ok(ticket) = request_rx.recv().await {
                 if let Err(e) = app_handle.emit("contact-request", ticket) {
@@ -93,7 +95,23 @@ fn build_router(
         ContactsProtocol::new(request_tx, response_rx)
     };
 
-    let call = { CallProtocol };
+    let call = {
+        let (ring_tx, mut ring_rx) = channel::<ContactTicket>(2);
+        let (response_tx, response_rx) = channel::<bool>(2);
+        app_state.ring_response_tx = Some(response_tx);
+
+        // Listen to ring requests
+        let app_handle = app_handle.clone();
+        tokio::spawn(async move {
+            while let Ok(ticket) = ring_rx.recv().await {
+                if let Err(e) = app_handle.emit("ring-request", ticket) {
+                    eprintln!("Failed to emit ring request event: {}", e);
+                }
+            }
+        });
+
+        CallProtocol::new(ring_tx, response_rx)
+    };
 
     Router::builder(endpoint)
         .accept(contacts::ALPN, contacts)
