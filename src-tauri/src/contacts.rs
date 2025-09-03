@@ -54,7 +54,7 @@ impl ContactsProtocol {
     pub async fn send_request(
         endpoint: &Endpoint,
         recipient_addr: impl Into<NodeAddr>,
-        sender_ticket: ContactTicket,
+        sender_ticket: &ContactTicket,
     ) -> Result<bool, String> {
         let connection = endpoint
             .connect(recipient_addr, ALPN)
@@ -63,7 +63,7 @@ impl ContactsProtocol {
         let (mut proto_tx, mut proto_rx) = connection.open_bi().await.map_err(|e| e.to_string())?;
 
         // Send the contact ticket
-        let serialized_ticket = Ticket::serialize(&sender_ticket);
+        let serialized_ticket = Ticket::serialize(sender_ticket);
         proto_tx
             .write(serialized_ticket.as_bytes())
             .await

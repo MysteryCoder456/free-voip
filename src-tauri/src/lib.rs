@@ -262,7 +262,7 @@ async fn send_contact_request(
     let self_ticket = app_state
         .endpoint_credentials
         .as_ref()
-        .map(|c| c.self_ticket.clone())
+        .map(|c| &c.self_ticket)
         .ok_or("Credentials not found")?;
 
     let accepted =
@@ -288,10 +288,19 @@ async fn respond_to_contact_request(
 }
 
 #[tauri::command]
-async fn ring_contact(node_addr: NodeId) -> Result<bool, String> {
-    // TODO: implement
+async fn ring_contact(app_state: State<'_, AppState>, node_addr: NodeId) -> Result<bool, String> {
     println!("Ringing {node_addr:?}");
-    Ok(true)
+    let app_state = app_state.read().await;
+
+    if let Some(endpoint) = app_state.router.as_ref().map(|r| r.endpoint()) {
+        if let Some(credentials) = app_state.endpoint_credentials.as_ref() {
+            CallProtocol::ring(endpoint, node_addr, &credentials.self_ticket).await
+        } else {
+            Err("Endpoint credentials not found".to_owned())
+        }
+    } else {
+        Err("Router is not initialized".to_owned())
+    }
 }
 
 #[tauri::command]

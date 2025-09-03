@@ -144,7 +144,7 @@ function AddContactDialog({
       },
       {
         preferredCamera: "environment",
-        highlightCodeOutline: true,
+        highlightScanRegion: true,
       },
     );
 

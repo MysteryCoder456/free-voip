@@ -32,9 +32,9 @@ impl CallProtocol {
     }
 
     pub async fn ring(
-        endpoint: Endpoint,
+        endpoint: &Endpoint,
         recipient_addr: impl Into<NodeAddr>,
-        self_ticket: ContactTicket,
+        self_ticket: &ContactTicket,
     ) -> Result<bool, String> {
         let conn = endpoint
             .connect(recipient_addr, ALPN)
@@ -43,7 +43,7 @@ impl CallProtocol {
         let (mut proto_tx, mut proto_rx) = conn.open_bi().await.map_err(|e| e.to_string())?;
 
         // Identify ourself with recipient
-        let serialized_ticket = postcard::to_stdvec(&self_ticket).map_err(|e| e.to_string())?;
+        let serialized_ticket = postcard::to_stdvec(self_ticket).map_err(|e| e.to_string())?;
         proto_tx
             .write_all(&serialized_ticket)
             .await
