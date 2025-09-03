@@ -70,9 +70,8 @@ function NavLink({
 
 export function Component() {
   const location = useLocation();
-  const [contactRequest, setContactRequest] = useState<
-    ContactRequest | undefined
-  >(undefined);
+  const [contactRequest, setContactRequest] = useState<ContactRequest>();
+  const [ringRequest, setRingRequest] = useState<ContactRequest>();
 
   const showNavigation = useMemo(
     () => showNavigationIn.has(location.pathname),
@@ -82,6 +81,9 @@ export function Component() {
   useEffect(() => {
     listen<ContactRequest>("contact-request", (event) => {
       setContactRequest(event.payload);
+    });
+    listen<ContactRequest>("ring-request", (event) => {
+      setRingRequest(event.payload);
     });
   }, []);
 
@@ -120,6 +122,11 @@ export function Component() {
     [contactRequest],
   );
 
+  const respondToRingRequest = useCallback(async (accept: boolean) => {
+    // TODO: implement
+    setRingRequest(undefined);
+  }, []);
+
   return (
     <>
       <div className="size-full flex flex-col gap-6">
@@ -145,7 +152,7 @@ export function Component() {
       </div>
 
       <Dialog
-        open={!!contactRequest}
+        open={contactRequest && !ringRequest}
         onOpenChange={(open) => {
           if (!open) {
             respondToContactRequest(false);
@@ -170,6 +177,34 @@ export function Component() {
             <Button onClick={() => respondToContactRequest(true)}>
               Accept
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!ringRequest}
+        onOpenChange={(open) => {
+          if (!open) {
+            respondToRingRequest(false);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{ringRequest?.nickname}</DialogTitle>
+            <DialogDescription>
+              Incoming call from <b>{ringRequest?.nickname}</b>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="destructive"
+              onClick={() => respondToRingRequest(false)}
+            >
+              Decline
+            </Button>
+            <Button onClick={() => respondToRingRequest(true)}>Accept</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
