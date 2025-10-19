@@ -19,15 +19,15 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
-tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-iroh = "0.90"
+iroh = "0.93"
+iroh-base = { version = "0.93", features = ["ticket"] }
 tokio = { version = "1.46", features = ["sync"] }
-tauri-plugin-store = "2"
-iroh-base = { version = "0.90", features = ["ticket"] }
 postcard = "1.1"
-tauri-plugin-clipboard-manager = "2"
+tauri-plugin-clipboard-manager = "2.3.0"
+tauri-plugin-opener = "2.5.0"
+tauri-plugin-store = "2.3.0"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.

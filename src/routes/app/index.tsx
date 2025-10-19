@@ -3,7 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import clsx from "clsx";
 import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, Outlet, type To, useLocation } from "react-router";
+import { Link, Outlet, type To, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +70,7 @@ function NavLink({
 
 export function Component() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [contactRequest, setContactRequest] = useState<ContactRequest>();
   const [ringRequest, setRingRequest] = useState<ContactRequest>();
 
@@ -100,6 +101,7 @@ export function Component() {
             description: error,
           });
         }
+        return;
       }
 
       // Update contacts list
@@ -122,10 +124,31 @@ export function Component() {
     [contactRequest],
   );
 
-  const respondToRingRequest = useCallback(async (accept: boolean) => {
-    // TODO: implement
-    setRingRequest(undefined);
-  }, []);
+  const respondToRingRequest = useCallback(
+    async (accept: boolean) => {
+      try {
+        await invoke("respond_to_ring", { accept });
+      } catch (error) {
+        console.error("Unable to respond to ring", error);
+
+        if (typeof error === "string") {
+          toast.error("Unable to respond to ring", {
+            description: error,
+          });
+        }
+        return;
+      }
+
+      if (accept) {
+        navigate(
+          `/app/contacts-list/call?nickname=${ringRequest?.nickname}&nodeId=${ringRequest?.nodeId}&acceptingCall`,
+        );
+      }
+
+      setRingRequest(undefined);
+    },
+    [navigate, ringRequest],
+  );
 
   return (
     <>

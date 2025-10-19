@@ -278,7 +278,7 @@ async fn respond_to_contact_request(
 ) -> Result<(), String> {
     let app_state = app_state.read().await;
 
-    if let Some(response_tx) = &app_state.contact_response_tx {
+    if let Some(ref response_tx) = app_state.contact_response_tx {
         // Send the response to the contact request
         response_tx.send(accept).map_err(|e| e.to_string())?;
         Ok(())
@@ -300,6 +300,18 @@ async fn ring_contact(app_state: State<'_, AppState>, node_addr: NodeId) -> Resu
         }
     } else {
         Err("Router is not initialized".to_owned())
+    }
+}
+
+#[tauri::command]
+async fn respond_to_ring(app_state: State<'_, AppState>, accept: bool) -> Result<(), String> {
+    let app_state = app_state.read().await;
+
+    if let Some(ref response_tx) = app_state.ring_response_tx {
+        response_tx.send(accept).map_err(|e| e.to_string())?;
+        Ok(())
+    } else {
+        Err("Ring response channel not initialized".to_owned())
     }
 }
 
@@ -339,6 +351,7 @@ pub fn run() {
             send_contact_request,
             respond_to_contact_request,
             ring_contact,
+            respond_to_ring,
             send_call_media,
         ])
         .run(tauri::generate_context!())

@@ -135,7 +135,9 @@ export function Component() {
   const cleanUpMediaStream = useCallback((mediaElement: HTMLMediaElement) => {
     mediaElement.pause();
     const stream = mediaElement.srcObject as MediaStream | null;
-    stream?.getTracks().forEach((t) => t.stop());
+    stream?.getTracks().forEach((t) => {
+      t.stop();
+    });
     mediaElement.srcObject = null;
   }, []);
 
@@ -198,18 +200,21 @@ export function Component() {
     selfVideoRef.current.srcObject = stream;
     await selfVideoRef.current.play();
 
-    // Ring peer
-    setCallState(CallState.Ringing);
-    const response = await invoke<boolean>("ring_contact", {
-      nodeAddr: contact.nodeId,
-    });
-    setCallState(CallState.InCall);
+    if (!searchParams.has("acceptingCall")) {
+      // Ring peer
 
-    if (!response) {
-      toast.warning(`${contact.nickname} didn't pick up the call`);
-      hangUp();
-      return;
+      setCallState(CallState.Ringing);
+      const response = await invoke<boolean>("ring_contact", {
+        nodeAddr: contact.nodeId,
+      });
+
+      if (!response) {
+        toast.warning(`${contact.nickname} didn't pick up the call`);
+        hangUp();
+        return;
+      }
     }
+    setCallState(CallState.InCall);
 
     // Listen for incoming media
     listen("incoming_call_media", (_event) => {
@@ -220,7 +225,7 @@ export function Component() {
     const [videoTrack] = stream.getVideoTracks();
     const [audioTrack] = stream.getAudioTracks();
     await setupEncodePipeline(videoTrack, audioTrack);
-  }, [contact, hangUp]);
+  }, [contact, hangUp, searchParams]);
 
   useEffect(() => {
     startCall();
