@@ -51,6 +51,8 @@ impl CallProtocol {
 
         // Wait for ring response
         let response = proto_rx.read_u8().await.map_err(|e| e.to_string())?;
+
+        conn.close(0u32.into(), b"Ring request complete");
         Ok(response == RESPONSE_ACCEPT)
     }
 }
@@ -81,7 +83,10 @@ impl ProtocolHandler for CallProtocol {
         };
 
         // Send response back to caller
+        dbg!(response);
         proto_tx.write_u8(response).await?;
+
+        connection.closed().await;
         Ok(())
     }
 }

@@ -204,13 +204,24 @@ export function Component() {
       // Ring peer
 
       setCallState(CallState.Ringing);
-      const response = await invoke<boolean>("ring_contact", {
-        nodeAddr: contact.nodeId,
-      });
+      try {
+        const response = await invoke<boolean>("ring_contact", {
+          nodeAddr: contact.nodeId,
+        });
 
-      if (!response) {
-        toast.warning(`${contact.nickname} didn't pick up the call`);
-        hangUp();
+        if (!response) {
+          toast.warning(`${contact.nickname} didn't pick up the call`);
+          hangUp();
+          return;
+        }
+      } catch (error) {
+        console.error("Unable to send ring", error);
+
+        if (typeof error === "string") {
+          toast.error("Unable to send ring", {
+            description: error,
+          });
+        }
         return;
       }
     }
