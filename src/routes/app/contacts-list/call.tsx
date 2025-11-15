@@ -54,7 +54,7 @@ async function setupEncodePipeline(
     const audioChunk = event.data;
 
     const dataBuffer = new ArrayBuffer(audioChunk.byteLength);
-    audioChunk.copyTo(dataBuffer); // FIXME: not available on Apple platforms
+    audioChunk.copyTo(dataBuffer);
 
     const media = {
       audio: {
