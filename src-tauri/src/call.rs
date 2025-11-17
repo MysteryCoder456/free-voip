@@ -4,12 +4,10 @@ use iroh::{
     protocol::{AcceptError, ProtocolHandler},
     Endpoint, NodeAddr,
 };
+use serde::{Deserialize, Serialize};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
-    sync::{
-        broadcast::{Receiver, Sender},
-        Mutex,
-    },
+    sync::{broadcast, Mutex},
 };
 
 pub const ALPN: &[u8] = b"free-voip/call";
@@ -17,21 +15,117 @@ pub const ALPN: &[u8] = b"free-voip/call";
 const RESPONSE_ACCEPT: u8 = 1;
 const RESPONSE_DECLINE: u8 = 0;
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+#[serde(rename_all_fields = "camelCase")]
+pub enum CallMedia {
+    Video {
+        #[serde(rename = "type")]
+        frame_type: String,
+        timestamp: u64,
+        duration: Option<u64>,
+        byte_length: u64,
+        frame_data: Vec<u8>,
+    },
+    Audio {
+        #[serde(rename = "type")]
+        frame_type: String,
+        timestamp: u64,
+        duration: Option<u64>,
+        byte_length: u64,
+        frame_data: Vec<u8>,
+    },
+}
+
 #[derive(Debug)]
 pub struct CallProtocol {
-    ring_tx: Sender<ContactTicket>,
-    response_rx: Mutex<Receiver<bool>>,
+    ring_tx: broadcast::Sender<ContactTicket>,
+    response_rx: Mutex<broadcast::Receiver<bool>>,
+    in_media_tx: broadcast::Sender<CallMedia>,
+    out_media_rx: broadcast::Receiver<CallMedia>,
+}
+
+impl Clone for CallProtocol {
+    fn clone(&self) -> Self {
+        Self {
+            ring_tx: self.ring_tx.clone(),
+            response_rx: Mutex::new(self.response_rx.blocking_lock().resubscribe()),
+            in_media_tx: self.in_media_tx.clone(),
+            out_media_rx: self.out_media_rx.resubscribe(),
+        }
+    }
 }
 
 impl CallProtocol {
-    pub fn new(ring_tx: Sender<ContactTicket>, response_rx: Receiver<bool>) -> Self {
+    pub fn new(
+        ring_tx: broadcast::Sender<ContactTicket>,
+        response_rx: broadcast::Receiver<bool>,
+        in_media_tx: broadcast::Sender<CallMedia>,
+        out_media_rx: broadcast::Receiver<CallMedia>,
+    ) -> Self {
         Self {
             ring_tx,
             response_rx: Mutex::new(response_rx),
+            in_media_tx,
+            out_media_rx,
         }
     }
 
+    async fn start_media_tasks(&self, conn: Connection, self_is_ringer: bool) {
+        let stream = if self_is_ringer {
+            conn.open_bi().await
+        } else {
+            conn.accept_bi().await
+        };
+
+        if let Err(err) = stream {
+            if self_is_ringer {
+                eprintln!("Failed to open media stream: {}", err);
+                conn.close(1u32.into(), b"Failed to open media stream");
+            } else {
+                eprintln!("Failed to accept media stream: {}", err);
+                conn.closed().await;
+            }
+            return;
+        }
+        let (mut proto_tx, mut proto_rx) = stream.unwrap();
+
+        let in_media_tx = self.in_media_tx.clone();
+        let mut out_media_rx = self.out_media_rx.resubscribe();
+
+        // Incoming media
+        tokio::spawn(async move {
+            let mut buf = Vec::<u8>::new();
+
+            while let Ok(Some(buf_size)) = proto_rx.read(&mut buf).await {
+                if let Ok(media) = postcard::from_bytes::<CallMedia>(&buf[..buf_size]) {
+                    if let Err(err) = in_media_tx.send(media) {
+                        eprintln!("Failed to forward incoming media frame to GUI: {}", err);
+                    }
+                } else {
+                    eprintln!("Unable to deserialize media frame");
+                }
+            }
+        });
+
+        // Outgoing media
+        tokio::spawn(async move {
+            let mut buf = Vec::<u8>::new();
+
+            while let Ok(media) = out_media_rx.recv().await {
+                if let Ok(used) = postcard::to_slice(&media, &mut buf) {
+                    if let Err(err) = proto_tx.write_all(&used).await {
+                        eprintln!("Failed to send media frame to peer: {}", err);
+                    }
+                } else {
+                    eprintln!("Unable to serialize media frame");
+                }
+            }
+        });
+    }
+
     pub async fn ring(
+        &self,
         endpoint: &Endpoint,
         recipient_addr: impl Into<NodeAddr>,
         self_ticket: &ContactTicket,
@@ -52,7 +146,12 @@ impl CallProtocol {
         // Wait for ring response
         let response = proto_rx.read_u8().await.map_err(|e| e.to_string())?;
 
-        conn.close(0u32.into(), b"Ring request complete");
+        if response == RESPONSE_ACCEPT {
+            self.start_media_tasks(conn, true).await;
+        } else {
+            conn.close(0u32.into(), b"Ring request complete");
+        }
+
         Ok(response == RESPONSE_ACCEPT)
     }
 }
@@ -86,7 +185,12 @@ impl ProtocolHandler for CallProtocol {
         dbg!(response);
         proto_tx.write_u8(response).await?;
 
-        connection.closed().await;
+        if response == RESPONSE_ACCEPT {
+            self.start_media_tasks(connection, false).await;
+        } else {
+            connection.closed().await;
+        }
+
         Ok(())
     }
 }

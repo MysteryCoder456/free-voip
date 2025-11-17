@@ -14,7 +14,10 @@ use tokio::sync::{
     RwLock,
 };
 
-use crate::{call::CallProtocol, contacts::ContactsProtocol};
+use crate::{
+    call::{CallMedia, CallProtocol},
+    contacts::ContactsProtocol,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,32 +30,12 @@ struct EndpointCredentials {
 struct AppStateInner {
     endpoint_credentials: Option<EndpointCredentials>,
     router: Option<Router>,
+    call_protocol: Option<CallProtocol>,
     contact_response_tx: Option<Sender<bool>>,
     ring_response_tx: Option<Sender<bool>>,
+    media_tx: Option<Sender<CallMedia>>,
 }
 type AppState = RwLock<AppStateInner>;
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-#[serde(rename_all_fields = "camelCase")]
-enum CallMedia {
-    Video {
-        #[serde(rename = "type")]
-        frame_type: String,
-        timestamp: u64,
-        duration: Option<u64>,
-        byte_length: u64,
-        frame_data: Vec<u8>,
-    },
-    Audio {
-        #[serde(rename = "type")]
-        frame_type: String,
-        timestamp: u64,
-        duration: Option<u64>,
-        byte_length: u64,
-        frame_data: Vec<u8>,
-    },
-}
 
 async fn build_endpoint(
     secret_key: Option<SecretKey>,
@@ -101,17 +84,34 @@ fn build_router(
         app_state.ring_response_tx = Some(response_tx);
 
         // Listen to ring requests
-        let app_handle = app_handle.clone();
+        let app_handle_clone = app_handle.clone();
         tokio::spawn(async move {
             while let Ok(ticket) = ring_rx.recv().await {
-                if let Err(e) = app_handle.emit("ring-request", ticket) {
+                if let Err(e) = app_handle_clone.emit("ring-request", ticket) {
                     eprintln!("Failed to emit ring request event: {}", e);
                 }
             }
         });
 
-        CallProtocol::new(ring_tx, response_rx)
+        let (in_media_tx, mut in_media_rx) = channel::<CallMedia>(32);
+        let (out_media_tx, out_media_rx) = channel::<CallMedia>(32);
+        app_state.media_tx = Some(out_media_tx);
+
+        // Listen for incoming media
+        let app_handle_clone = app_handle.clone();
+        tokio::spawn(async move {
+            while let Ok(media) = in_media_rx.recv().await {
+                if let Err(e) = app_handle_clone.emit("incoming-call-media", media) {
+                    eprintln!("Failed to emit incoming call media event: {}", e);
+                }
+            }
+        });
+
+        CallProtocol::new(ring_tx, response_rx, in_media_tx, out_media_rx)
     };
+
+    // HACK: only used to call `ring` because it requires GUI-Iroh bridging channels
+    app_state.call_protocol = Some(call.clone());
 
     Router::builder(endpoint)
         .accept(contacts::ALPN, contacts)
@@ -292,14 +292,18 @@ async fn ring_contact(app_state: State<'_, AppState>, node_addr: NodeId) -> Resu
     println!("Ringing {node_addr:?}");
     let app_state = app_state.read().await;
 
-    if let Some(endpoint) = app_state.router.as_ref().map(|r| r.endpoint()) {
+    if let (Some(router), Some(call_protocol)) =
+        (app_state.router.as_ref(), app_state.call_protocol.as_ref())
+    {
         if let Some(credentials) = app_state.endpoint_credentials.as_ref() {
-            CallProtocol::ring(endpoint, node_addr, &credentials.self_ticket).await
+            call_protocol
+                .ring(router.endpoint(), node_addr, &credentials.self_ticket)
+                .await
         } else {
             Err("Endpoint credentials not found".to_owned())
         }
     } else {
-        Err("Router is not initialized".to_owned())
+        Err("Router/protocol is not initialized".to_owned())
     }
 }
 

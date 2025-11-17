@@ -15,7 +15,6 @@
 		35BE03CFF90E5E26E6C496C5 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BA746A2082DA40B654248F52 /* QuartzCore.framework */; };
 		49C5216BD115D38A39D127FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4BF4B4E18DC143F816858B54 /* LaunchScreen.storyboard */; };
 		58C9C59E67AF63A6CE24F000 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 65EA1ACA5B7424AAD7CCF697 /* main.mm */; };
-		63E6FAC5B24D34E321262718 /* libapp.a in Resources */ = {isa = PBXBuildFile; fileRef = 99A2073E4D5CC1B0F46C4632 /* libapp.a */; };
 		7C76C9917B1044306BEA53AA /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6D02C4DD9A8E2D1D2D5368E4 /* UIKit.framework */; };
 		8BA2E792721A43850B2A88E7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E68350E8942F054406611C2A /* Assets.xcassets */; };
 		AB371582830DB47873F851E4 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A930556A90A88E9BC6487A96 /* WebKit.framework */; };
@@ -35,7 +34,6 @@
 		65EA1ACA5B7424AAD7CCF697 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		6D02C4DD9A8E2D1D2D5368E4 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		962C1146CAD3455BCBEC07BF /* main.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = main.rs; sourceTree = "<group>"; };
-		99A2073E4D5CC1B0F46C4632 /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
 		A03443299775486BCEA11D52 /* free-voip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "free-voip.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2092C9A0B6896D9A0AB17D0 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		A930556A90A88E9BC6487A96 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
@@ -68,7 +66,6 @@
 		08136B20E0BEEED67981635A /* Externals */ = {
 			isa = PBXGroup;
 			children = (
-				D303C52EB3920A88307C8D09 /* arm64 */,
 			);
 			path = Externals;
 			sourceTree = "<group>";
@@ -157,22 +154,6 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
-		D303C52EB3920A88307C8D09 /* arm64 */ = {
-			isa = PBXGroup;
-			children = (
-				D760B2493989E5716B8F91AF /* debug */,
-			);
-			path = arm64;
-			sourceTree = "<group>";
-		};
-		D760B2493989E5716B8F91AF /* debug */ = {
-			isa = PBXGroup;
-			children = (
-				99A2073E4D5CC1B0F46C4632 /* libapp.a */,
-			);
-			path = debug;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -231,7 +212,6 @@
 				8BA2E792721A43850B2A88E7 /* Assets.xcassets in Resources */,
 				49C5216BD115D38A39D127FF /* LaunchScreen.storyboard in Resources */,
 				DBBC3C1E8F78DEDD628448E9 /* assets in Resources */,
-				63E6FAC5B24D34E321262718 /* libapp.a in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -257,7 +237,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cargo tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}\n";
+			shellScript = "cargo tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -318,7 +298,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -380,7 +360,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

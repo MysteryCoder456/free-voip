@@ -228,8 +228,9 @@ export function Component() {
     setCallState(CallState.InCall);
 
     // Listen for incoming media
-    listen("incoming_call_media", (_event) => {
+    listen("incoming-call-media", (_event) => {
       // TODO: handle incoming media stream
+      console.debug("received media");
     });
 
     // Transmit self media to peer
