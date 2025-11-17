@@ -320,9 +320,15 @@ async fn respond_to_ring(app_state: State<'_, AppState>, accept: bool) -> Result
 }
 
 #[tauri::command]
-async fn send_call_media(media: CallMedia) -> Result<(), String> {
-    // TODO: implement
-    Ok(())
+async fn send_call_media(app_state: State<'_, AppState>, media: CallMedia) -> Result<(), String> {
+    let app_state = app_state.read().await;
+
+    if let Some(ref media_tx) = app_state.media_tx {
+        media_tx.send(media).map_err(|e| e.to_string())?;
+        Ok(())
+    } else {
+        Err("Media channel not intialized".to_owned())
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

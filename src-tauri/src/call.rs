@@ -47,9 +47,11 @@ pub struct CallProtocol {
 
 impl Clone for CallProtocol {
     fn clone(&self) -> Self {
+        let response_rx = self.response_rx.try_lock().unwrap();
+
         Self {
             ring_tx: self.ring_tx.clone(),
-            response_rx: Mutex::new(self.response_rx.blocking_lock().resubscribe()),
+            response_rx: Mutex::new(response_rx.resubscribe()),
             in_media_tx: self.in_media_tx.clone(),
             out_media_rx: self.out_media_rx.resubscribe(),
         }
@@ -96,29 +98,40 @@ impl CallProtocol {
         // Incoming media
         tokio::spawn(async move {
             let mut buf = Vec::<u8>::new();
+            let mut buf_size: usize = 0;
 
-            while let Ok(Some(buf_size)) = proto_rx.read(&mut buf).await {
-                if let Ok(media) = postcard::from_bytes::<CallMedia>(&buf[..buf_size]) {
-                    if let Err(err) = in_media_tx.send(media) {
-                        eprintln!("Failed to forward incoming media frame to GUI: {}", err);
+            let mut partial_buf = Vec::<u8>::new();
+
+            while let Ok(bytes_read) = proto_rx.read(&mut partial_buf).await {
+                if let Some(bytes_read) = bytes_read {
+                    buf.extend(&partial_buf);
+                    buf_size += bytes_read;
+                    continue;
+                }
+
+                dbg!(buf.len(), partial_buf.len());
+
+                match postcard::from_bytes::<CallMedia>(&buf[..buf_size]) {
+                    Ok(media) => {
+                        if let Err(err) = in_media_tx.send(media) {
+                            eprintln!("Failed to forward incoming media frame to GUI: {}", err);
+                        }
                     }
-                } else {
-                    eprintln!("Unable to deserialize media frame");
+                    Err(err) => eprintln!("Unable to deserialize media frame: {}", err),
                 }
             }
         });
 
         // Outgoing media
         tokio::spawn(async move {
-            let mut buf = Vec::<u8>::new();
-
             while let Ok(media) = out_media_rx.recv().await {
-                if let Ok(used) = postcard::to_slice(&media, &mut buf) {
-                    if let Err(err) = proto_tx.write_all(&used).await {
-                        eprintln!("Failed to send media frame to peer: {}", err);
+                match postcard::to_stdvec(&media) {
+                    Ok(buf) => {
+                        if let Err(err) = proto_tx.write_all(&buf).await {
+                            eprintln!("Failed to send media frame to peer: {}", err);
+                        }
                     }
-                } else {
-                    eprintln!("Unable to serialize media frame");
+                    Err(err) => eprintln!("Unable to serialize media frame: {}", err),
                 }
             }
         });
