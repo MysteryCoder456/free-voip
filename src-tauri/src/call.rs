@@ -74,6 +74,8 @@ impl CallProtocol {
     }
 
     async fn start_media_tasks(&self, conn: Connection, self_is_ringer: bool) {
+        // TODO: propagate errors to GUI
+
         let stream = if self_is_ringer {
             conn.open_bi().await
         } else {
@@ -92,26 +94,23 @@ impl CallProtocol {
         }
         let (mut proto_tx, mut proto_rx) = stream.unwrap();
 
+        // Prime the lazy QUIC stream
+        if self_is_ringer {
+            proto_tx.write_u8(0).await.unwrap();
+        } else {
+            assert_eq!(proto_rx.read_u8().await.unwrap(), 0);
+        }
+
         let in_media_tx = self.in_media_tx.clone();
         let mut out_media_rx = self.out_media_rx.resubscribe();
 
         // Incoming media
         tokio::spawn(async move {
+            // HACK: memory leak?
             let mut buf = Vec::<u8>::new();
-            let mut buf_size: usize = 0;
 
-            let mut partial_buf = Vec::<u8>::new();
-
-            while let Ok(bytes_read) = proto_rx.read(&mut partial_buf).await {
-                if let Some(bytes_read) = bytes_read {
-                    buf.extend(&partial_buf);
-                    buf_size += bytes_read;
-                    continue;
-                }
-
-                dbg!(buf.len(), partial_buf.len());
-
-                match postcard::from_bytes::<CallMedia>(&buf[..buf_size]) {
+            while let Ok(_bytes_read) = proto_rx.read_buf(&mut buf).await {
+                match postcard::from_bytes::<CallMedia>(&buf) {
                     Ok(media) => {
                         if let Err(err) = in_media_tx.send(media) {
                             eprintln!("Failed to forward incoming media frame to GUI: {}", err);
