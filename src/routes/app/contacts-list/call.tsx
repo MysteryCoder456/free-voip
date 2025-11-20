@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/a11y/useMediaCaption: Not applicable for a video call */
 
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
+import { emit, listen } from "@tauri-apps/api/event";
 import {
   Mic,
   MicOff,
@@ -22,8 +22,19 @@ enum CallState {
   InCall = "In Call",
 }
 
+type EncodedPayload = {
+  type: "key" | "delta";
+  timestamp: number;
+  duration: number | null;
+  byteLength: number;
+  frameData: ArrayBuffer;
+};
+
 var videoEncodeWorker: Worker | undefined;
 var audioEncodeWorker: Worker | undefined;
+
+var videoDecodeWorker: Worker | undefined;
+var audioDecodeWorker: Worker | undefined;
 
 async function setupEncodePipeline(
   videoTrack: MediaStreamTrack,
@@ -36,7 +47,7 @@ async function setupEncodePipeline(
     const dataBuffer = new ArrayBuffer(videoChunk.byteLength);
     videoChunk.copyTo(dataBuffer);
 
-    const media = {
+    const media: { video: EncodedPayload } = {
       video: {
         type: videoChunk.type,
         timestamp: videoChunk.timestamp,
@@ -90,6 +101,18 @@ async function setupEncodePipeline(
   // Kick off workers
   videoEncodeWorker.postMessage(videoTrack);
   audioEncodeWorker.postMessage(audioTrack);
+}
+
+async function setupDecodePipeline() {
+  videoDecodeWorker = new Worker("/video-decoder.js");
+  videoDecodeWorker.onmessage = (event) => {
+    emit("decoded-call-media", event.data);
+  };
+
+  audioDecodeWorker = new Worker("/audio-decoder.js");
+  audioDecodeWorker.onmessage = (event) => {
+    emit("decoded-call-media", event.data);
+  };
 }
 
 function getMediaStream(): Promise<MediaStream> {
@@ -228,9 +251,45 @@ export function Component() {
     setCallState(CallState.InCall);
 
     // Listen for incoming media
-    listen("incoming-call-media", (_event) => {
-      // TODO: handle incoming media stream
+    setupDecodePipeline();
+    listen("incoming-call-media", (event) => {
       console.debug("received media");
+      const mediaData = event.payload as
+        | { video: EncodedPayload }
+        | { audio: EncodedPayload };
+
+      if ("video" in mediaData) {
+        const init = {
+          type: mediaData.video.type,
+          timestamp: mediaData.video.timestamp,
+          duration: mediaData.video.duration ?? 0,
+          data: mediaData.video.frameData,
+          transfer: [mediaData.video.frameData],
+        };
+        const videoChunk = new EncodedVideoChunk(init);
+        videoDecodeWorker?.postMessage(videoChunk);
+      }
+
+      if ("audio" in mediaData) {
+        const init = {
+          type: mediaData.audio.type,
+          timestamp: mediaData.audio.timestamp,
+          duration: mediaData.audio.duration ?? 0,
+          data: mediaData.audio.frameData,
+          transfer: [mediaData.audio.frameData],
+        };
+        const audioChunk = new EncodedAudioChunk(init);
+        audioDecodeWorker?.postMessage(audioChunk);
+      }
+    });
+    listen("decoded-call-media", (event) => {
+      if (event.payload instanceof VideoFrame) {
+        // TODO: show the frame
+      }
+
+      if (event.payload instanceof AudioData) {
+        // TODO: play the audio
+      }
     });
 
     // Transmit self media to peer
