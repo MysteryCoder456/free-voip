@@ -231,11 +231,11 @@ export function Component() {
   const startCall = useCallback(async () => {
     if (!selfVideoRef.current) return;
     if (!peerVideoRef.current) return;
+    debugger;
 
     // Create and listen to media stream
     const stream = await getMediaStream();
     selfVideoRef.current.srcObject = stream;
-    await selfVideoRef.current.play();
 
     if (!searchParams.has("acceptingCall")) {
       // Ring peer
@@ -267,7 +267,6 @@ export function Component() {
     // Listen for incoming media
     const peerMediaStream = await setupDecodePipeline();
     peerVideoRef.current.srcObject = peerMediaStream;
-    await peerVideoRef.current.play();
     listen("incoming-call-media", (event) => {
       console.debug("received media");
       const mediaData = event.payload as
@@ -275,6 +274,7 @@ export function Component() {
         | { audio: EncodedPayload };
 
       if ("video" in mediaData) {
+        debugger;
         const init = {
           type: mediaData.video.type,
           timestamp: mediaData.video.timestamp,
@@ -309,6 +309,9 @@ export function Component() {
     const [videoTrack] = stream.getVideoTracks();
     const [audioTrack] = stream.getAudioTracks();
     await setupEncodePipeline(videoTrack, audioTrack);
+
+    await selfVideoRef.current.play();
+    await peerVideoRef.current.play();
   }, [contact, hangUp, searchParams]);
 
   useEffect(() => {
