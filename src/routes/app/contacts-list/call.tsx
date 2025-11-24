@@ -103,16 +103,29 @@ async function setupEncodePipeline(
   audioEncodeWorker.postMessage(audioTrack);
 }
 
-async function setupDecodePipeline() {
+async function setupDecodePipeline(): Promise<MediaStream> {
   videoDecodeWorker = new Worker("/video-decoder.js");
-  videoDecodeWorker.onmessage = (event) => {
-    emit("decoded-call-media", event.data);
-  };
+  // videoDecodeWorker.onmessage = (event) => {
+  //   emit("decoded-call-media", event.data);
+  // };
+  videoDecodeWorker.onerror = console.error;
+  const videoTrack = await new Promise((r) => {
+    if (!videoDecodeWorker) {
+      r(null);
+      return;
+    }
+    videoDecodeWorker.onmessage = (event) => r(event.data);
+    videoDecodeWorker.postMessage(null);
+  });
 
   audioDecodeWorker = new Worker("/audio-decoder.js");
   audioDecodeWorker.onmessage = (event) => {
     emit("decoded-call-media", event.data);
   };
+  audioDecodeWorker.onerror = console.error;
+
+  const stream = new MediaStream([videoTrack as MediaStreamTrack]);
+  return stream;
 }
 
 function getMediaStream(): Promise<MediaStream> {
@@ -217,6 +230,7 @@ export function Component() {
 
   const startCall = useCallback(async () => {
     if (!selfVideoRef.current) return;
+    if (!peerVideoRef.current) return;
 
     // Create and listen to media stream
     const stream = await getMediaStream();
@@ -251,7 +265,9 @@ export function Component() {
     setCallState(CallState.InCall);
 
     // Listen for incoming media
-    setupDecodePipeline();
+    const peerMediaStream = await setupDecodePipeline();
+    peerVideoRef.current.srcObject = peerMediaStream;
+    await peerVideoRef.current.play();
     listen("incoming-call-media", (event) => {
       console.debug("received media");
       const mediaData = event.payload as
@@ -283,12 +299,9 @@ export function Component() {
       }
     });
     listen("decoded-call-media", (event) => {
-      if (event.payload instanceof VideoFrame) {
-        // TODO: show the frame
-      }
-
       if (event.payload instanceof AudioData) {
         // TODO: play the audio
+        console.debug("received audio data");
       }
     });
 
@@ -326,7 +339,7 @@ export function Component() {
 
       <div className="size-full flex flex-col gap-4">
         <div className="grow flex relative bg-secondary rounded-xl">
-          <video ref={peerVideoRef} muted />
+          <video ref={peerVideoRef} />
 
           {/* TODO: Hide this if peer's camera is on */}
           <div className="absolute top-[50%] left-[50%] -translate-[50%] flex flex-col text-center">
