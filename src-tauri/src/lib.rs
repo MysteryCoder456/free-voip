@@ -7,10 +7,10 @@ use contacts::ContactTicket;
 use iroh::{protocol::Router, Endpoint, NodeId, SecretKey};
 use iroh_base::ticket::Ticket;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{ipc::Channel, AppHandle, Emitter, Manager, State};
 use tauri_plugin_store::StoreExt;
 use tokio::sync::{
-    broadcast::{channel, Sender},
+    broadcast::{channel, Receiver, Sender},
     RwLock,
 };
 
@@ -34,6 +34,7 @@ struct AppStateInner {
     contact_response_tx: Option<Sender<bool>>,
     ring_response_tx: Option<Sender<bool>>,
     media_tx: Option<Sender<CallMedia>>,
+    media_rx: Option<Receiver<CallMedia>>,
 }
 type AppState = RwLock<AppStateInner>;
 
@@ -93,19 +94,10 @@ fn build_router(
             }
         });
 
-        let (in_media_tx, mut in_media_rx) = channel::<CallMedia>(32);
+        let (in_media_tx, in_media_rx) = channel::<CallMedia>(32);
         let (out_media_tx, out_media_rx) = channel::<CallMedia>(32);
         app_state.media_tx = Some(out_media_tx);
-
-        // Listen for incoming media
-        let app_handle_clone = app_handle.clone();
-        tokio::spawn(async move {
-            while let Ok(media) = in_media_rx.recv().await {
-                if let Err(e) = app_handle_clone.emit("incoming-call-media", media) {
-                    eprintln!("Failed to emit incoming call media event: {}", e);
-                }
-            }
-        });
+        app_state.media_rx = Some(in_media_rx);
 
         CallProtocol::new(ring_tx, response_rx, in_media_tx, out_media_rx)
     };
@@ -331,6 +323,28 @@ async fn send_call_media(app_state: State<'_, AppState>, media: CallMedia) -> Re
     }
 }
 
+#[tauri::command]
+async fn register_media_channel(
+    app_state: State<'_, AppState>,
+    on_media_received: Channel<CallMedia>,
+) -> Result<(), String> {
+    let app_state = app_state.read().await;
+    let mut media_rx = app_state
+        .media_rx
+        .as_ref()
+        .ok_or("Media receiver not initialized".to_owned())?
+        .resubscribe();
+
+    tokio::spawn(async move {
+        while let Ok(media) = media_rx.recv().await {
+            if let Err(e) = on_media_received.send(media) {
+                eprintln!("Failed to send call media to media channel: {}", e);
+            }
+        }
+    });
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -363,6 +377,7 @@ pub fn run() {
             ring_contact,
             respond_to_ring,
             send_call_media,
+            register_media_channel,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

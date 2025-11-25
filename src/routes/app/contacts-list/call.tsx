@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/a11y/useMediaCaption: Not applicable for a video call */
 
-import { invoke } from "@tauri-apps/api/core";
+import { Channel, invoke } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
 import {
   Mic,
@@ -231,11 +231,11 @@ export function Component() {
   const startCall = useCallback(async () => {
     if (!selfVideoRef.current) return;
     if (!peerVideoRef.current) return;
-    debugger;
 
     // Create and listen to media stream
     const stream = await getMediaStream();
     selfVideoRef.current.srcObject = stream;
+    selfVideoRef.current.play();
 
     if (!searchParams.has("acceptingCall")) {
       // Ring peer
@@ -267,14 +267,13 @@ export function Component() {
     // Listen for incoming media
     const peerMediaStream = await setupDecodePipeline();
     peerVideoRef.current.srcObject = peerMediaStream;
-    listen("incoming-call-media", (event) => {
-      console.debug("received media");
-      const mediaData = event.payload as
-        | { video: EncodedPayload }
-        | { audio: EncodedPayload };
-
+    peerVideoRef.current.play();
+    const onMediaReceived = new Channel<
+      { video: EncodedPayload } | { audio: EncodedPayload }
+    >();
+    onMediaReceived.onmessage = (mediaData) => {
       if ("video" in mediaData) {
-        debugger;
+        console.log("received video media from peer");
         const init = {
           type: mediaData.video.type,
           timestamp: mediaData.video.timestamp,
@@ -283,10 +282,11 @@ export function Component() {
           transfer: [mediaData.video.frameData],
         };
         const videoChunk = new EncodedVideoChunk(init);
-        videoDecodeWorker?.postMessage(videoChunk);
+        videoDecodeWorker?.postMessage(videoChunk, [videoChunk]); // FIXME: does not post
       }
 
       if ("audio" in mediaData) {
+        console.log("received audio media from peer");
         const init = {
           type: mediaData.audio.type,
           timestamp: mediaData.audio.timestamp,
@@ -295,9 +295,10 @@ export function Component() {
           transfer: [mediaData.audio.frameData],
         };
         const audioChunk = new EncodedAudioChunk(init);
-        audioDecodeWorker?.postMessage(audioChunk);
+        audioDecodeWorker?.postMessage(audioChunk, [audioChunk]); // FIXME: does not post
       }
-    });
+    };
+    await invoke("register_media_channel", { onMediaReceived });
     listen("decoded-call-media", (event) => {
       if (event.payload instanceof AudioData) {
         // TODO: play the audio
@@ -309,9 +310,6 @@ export function Component() {
     const [videoTrack] = stream.getVideoTracks();
     const [audioTrack] = stream.getAudioTracks();
     await setupEncodePipeline(videoTrack, audioTrack);
-
-    await selfVideoRef.current.play();
-    await peerVideoRef.current.play();
   }, [contact, hangUp, searchParams]);
 
   useEffect(() => {
@@ -327,6 +325,12 @@ export function Component() {
 
       audioEncodeWorker?.terminate();
       audioEncodeWorker = undefined;
+
+      videoDecodeWorker?.terminate();
+      videoDecodeWorker = undefined;
+
+      audioDecodeWorker?.terminate();
+      audioDecodeWorker = undefined;
     };
   }, [startCall, cleanUpMediaStream]);
 

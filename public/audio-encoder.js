@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noGlobalAssign: This is fine in a web worker */
 /// <reference lib="webworker" />
 
-/** @type {number} */
+/** @type {number | undefined} */
 var audioSampleRate;
 
 const audioEncoder = new AudioEncoder({
@@ -31,6 +31,11 @@ onmessage = (event) => {
       },
     });
 
+    return;
+  }
+
+  if (!audioSampleRate) {
+    console.error("audioSampleRate is not set");
     return;
   }
 
