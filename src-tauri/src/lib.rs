@@ -96,10 +96,20 @@ fn build_router(
 
         let (in_media_tx, in_media_rx) = channel::<CallMedia>(32);
         let (out_media_tx, out_media_rx) = channel::<CallMedia>(32);
+        let (hang_up_tx, mut hang_up_rx) = channel::<()>(1);
         app_state.media_tx = Some(out_media_tx);
         app_state.media_rx = Some(in_media_rx);
 
-        CallProtocol::new(ring_tx, response_rx, in_media_tx, out_media_rx)
+        let app_handle_clone = app_handle.clone();
+        tokio::spawn(async move {
+            while let Ok(()) = hang_up_rx.recv().await {
+                if let Err(err) = app_handle_clone.emit("call-hang-up", ()) {
+                    eprintln!("Failed to emit call hangup event: {}", err);
+                }
+            }
+        });
+
+        CallProtocol::new(ring_tx, response_rx, in_media_tx, out_media_rx, hang_up_tx)
     };
 
     // HACK: only used to call `ring` because it requires GUI-Iroh bridging channels
@@ -345,6 +355,17 @@ async fn register_media_channel(
     Ok(())
 }
 
+#[tauri::command]
+async fn hang_up(app_state: State<'_, AppState>) -> Result<(), String> {
+    let app_state = app_state.read().await;
+    let call_proto = app_state
+        .call_protocol
+        .as_ref()
+        .ok_or("Call protocol not initialized".to_owned())?;
+    call_proto.disconnect().await;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -378,6 +399,7 @@ pub fn run() {
             respond_to_ring,
             send_call_media,
             register_media_channel,
+            hang_up,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

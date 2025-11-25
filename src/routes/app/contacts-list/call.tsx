@@ -192,9 +192,10 @@ export function Component() {
     console.debug("🤳 Flipped camera!");
   }, [supportsCameraSwitching]);
 
-  const hangUp = useCallback(() => {
-    // TODO: close connection with peer
-
+  const hangUp = useCallback(async () => {
+    await invoke("hang_up");
+  }, []);
+  const exitCall = useCallback(() => {
     if (selfVideoRef.current) cleanUpMediaStream(selfVideoRef.current);
     if (peerVideoRef.current) cleanUpMediaStream(peerVideoRef.current);
 
@@ -248,7 +249,7 @@ export function Component() {
 
         if (!response) {
           toast.warning(`${contact.nickname} didn't pick up the call`);
-          hangUp();
+          exitCall();
           return;
         }
       } catch (error) {
@@ -263,6 +264,12 @@ export function Component() {
       }
     }
     setCallState(CallState.InCall);
+
+    // Listen for hang ups
+    listen("call-hang-up", () => {
+      // Calling `hangUp` instead of `exitCall` to set reset connection state
+      hangUp();
+    });
 
     // Listen for incoming media
     const peerMediaStream = await setupDecodePipeline();
@@ -310,7 +317,7 @@ export function Component() {
     const [videoTrack] = stream.getVideoTracks();
     const [audioTrack] = stream.getAudioTracks();
     await setupEncodePipeline(videoTrack, audioTrack);
-  }, [contact, hangUp, searchParams]);
+  }, [contact, exitCall, hangUp, searchParams]);
 
   useEffect(() => {
     startCall();
