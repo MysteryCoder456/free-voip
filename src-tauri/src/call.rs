@@ -235,6 +235,7 @@ impl CallProtocol {
         let mut conn_state = self.connection.lock().await;
         if let Some(conn) = conn_state.as_ref() {
             conn.close(0u32.into(), b"Hanging up");
+            conn.closed().await;
         }
         *conn_state = None;
     }
