@@ -25,7 +25,7 @@ onmessage = (event) => {
     height: videoTrack.getSettings().height,
     hardwareAcceleration: "prefer-hardware",
     latencyMode: "realtime",
-    framerate: 60,
+    framerate: 30,
   });
 
   const videoProcessor = new MediaStreamTrackProcessor({ track: videoTrack });

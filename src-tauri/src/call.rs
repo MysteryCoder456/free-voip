@@ -122,81 +122,40 @@ impl CallProtocol {
         let hang_up_clone = self.hang_up_tx.clone();
         tokio::spawn(async move {
             loop {
-                let buf_size = proto_rx
-                    .read_u64()
-                    .await
-                    .expect("Expected to receive message size");
-                let buf_result = proto_rx.read_to_end(buf_size as usize).await;
-
-                match buf_result {
-                    Ok(buf) => match postcard::from_bytes::<CallMedia>(&buf) {
-                        Ok(media) => {
-                            if let Err(err) = in_media_tx.send(media) {
-                                eprintln!("Failed to forward incoming media frame to GUI: {}", err);
-                            }
-                        }
-                        Err(err) => eprintln!("Unable to deserialize media frame: {}", err),
-                    },
-                    Err(err) => match err {
-                        iroh::endpoint::ReadToEndError::Read(read_error) => match read_error {
-                            iroh::endpoint::ReadError::ConnectionLost(connection_error) => {
-                                println!("Peer disconnected: {}", connection_error);
-                                break;
-                            }
-                            iroh::endpoint::ReadError::Reset(var_int) => {
-                                println!("Stream reset by peer: {}", var_int);
-                                break;
-                            }
-                            iroh::endpoint::ReadError::ClosedStream => {
-                                println!("Stream closed by peer");
-                                break;
-                            }
-                            _ => {
-                                eprintln!("Failed to read media frame from peer: {}", read_error);
-                            }
-                        },
-                        iroh::endpoint::ReadToEndError::TooLong => {
-                            eprintln!("Read too long error!");
-                        }
-                    },
+                println!("Attempting to receive");
+                let num_bytes = proto_rx.read_u32().await.unwrap();
+                let mut buf = vec![0u8; num_bytes as usize];
+                proto_rx.read_exact(&mut buf).await.unwrap();
+                let media = postcard::from_bytes::<CallMedia>(&buf).unwrap();
+                match media {
+                    CallMedia::Video { .. } => println!("Received video frame"),
+                    CallMedia::Audio { .. } => println!("Received audio frame"),
                 }
+                in_media_tx.send(media).unwrap();
             }
-            hang_up_clone.send(()).expect("Failed to signal hang up");
+
+            // println!("Exited incoming media loop");
+            // hang_up_clone.send(()).expect("Failed to signal hang up");
         });
 
         // Outgoing media
         let hang_up_clone = self.hang_up_tx.clone();
         tokio::spawn(async move {
-            while let Ok(media) = out_media_rx.recv().await {
-                match postcard::to_stdvec(&media) {
-                    Ok(buf) => {
-                        // Send buffer size
-                        proto_tx
-                            .write_u64(buf.len() as u64)
-                            .await
-                            .expect("Expected to send message size");
-
-                        // Send buffer
-                        if let Err(err) = proto_tx.write_all(&buf).await {
-                            match err {
-                                WriteError::ConnectionLost(connection_error) => {
-                                    println!("Peer disconnected: {}", connection_error);
-                                    break;
-                                }
-                                WriteError::ClosedStream => {
-                                    println!("Stream closed by peer");
-                                    break;
-                                }
-                                _ => {
-                                    eprintln!("Failed to send media frame to peer: {}", err);
-                                }
-                            }
-                        }
-                    }
-                    Err(err) => eprintln!("Unable to serialize media frame: {}", err),
+            loop {
+                if let Ok(media) = out_media_rx.recv().await {
+                    let media_serialized = postcard::to_stdvec(&media).unwrap();
+                    proto_tx
+                        .write_u32(media_serialized.len() as u32)
+                        .await
+                        .unwrap();
+                    proto_tx.write_all(&media_serialized).await.unwrap();
+                    println!("Sent!");
                 }
+                tokio::time::sleep(std::time::Duration::from_millis(200)).await;
             }
-            hang_up_clone.send(()).expect("Failed to signal hang up");
+
+            // println!("Exited incoming media loop");
+            // hang_up_clone.send(()).expect("Failed to signal hang up");
         });
     }
 

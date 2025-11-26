@@ -27,7 +27,7 @@ type EncodedPayload = {
   timestamp: number;
   duration: number | null;
   byteLength: number;
-  frameData: ArrayBuffer;
+  frameData: ArrayBuffer | Array<number>;
 };
 
 var videoEncodeWorker: Worker | undefined;
@@ -146,6 +146,7 @@ export function Component() {
   const selfVideoRef = useRef<HTMLVideoElement>(null);
   const peerVideoRef = useRef<HTMLVideoElement>(null);
 
+  const hasCallStarted = useRef(false);
   const [callState, setCallState] = useState<CallState>(CallState.Calling);
   const [isSelfVideoOn, setIsSelfVideoOn] = useState<boolean>(true);
   const [isSelfAudioOn, setIsSelfAudioOn] = useState<boolean>(true);
@@ -192,9 +193,6 @@ export function Component() {
     console.debug("🤳 Flipped camera!");
   }, [supportsCameraSwitching]);
 
-  const hangUp = useCallback(async () => {
-    await invoke("hang_up");
-  }, []);
   const exitCall = useCallback(() => {
     if (selfVideoRef.current) cleanUpMediaStream(selfVideoRef.current);
     if (peerVideoRef.current) cleanUpMediaStream(peerVideoRef.current);
@@ -202,6 +200,21 @@ export function Component() {
     // Leave call page
     navigate(-1);
   }, [cleanUpMediaStream, navigate]);
+  const hangUp = useCallback(async () => {
+    try {
+      await invoke("hang_up");
+      exitCall();
+    } catch (error) {
+      console.error("Unable to hang up", error);
+
+      if (typeof error === "string") {
+        toast.error("Unable to hang up", {
+          description: error,
+        });
+      }
+      return;
+    }
+  }, [exitCall]);
 
   const toggleSelfVideo = useCallback(() => {
     setIsSelfVideoOn((prevValue) => {
@@ -281,28 +294,30 @@ export function Component() {
     onMediaReceived.onmessage = (mediaData) => {
       if ("video" in mediaData) {
         console.log("received video media from peer");
+        const frameData = new Uint8Array(mediaData.video.frameData as number[]);
         const init = {
           type: mediaData.video.type,
           timestamp: mediaData.video.timestamp,
           duration: mediaData.video.duration ?? 0,
-          data: mediaData.video.frameData,
-          transfer: [mediaData.video.frameData],
+          data: frameData,
+          transfer: [frameData],
         };
         const videoChunk = new EncodedVideoChunk(init);
-        videoDecodeWorker?.postMessage(videoChunk, [videoChunk]); // FIXME: does not post
+        videoDecodeWorker?.postMessage(videoChunk);
       }
 
       if ("audio" in mediaData) {
         console.log("received audio media from peer");
+        const frameData = new Uint8Array(mediaData.audio.frameData as number[]);
         const init = {
           type: mediaData.audio.type,
           timestamp: mediaData.audio.timestamp,
           duration: mediaData.audio.duration ?? 0,
-          data: mediaData.audio.frameData,
-          transfer: [mediaData.audio.frameData],
+          data: frameData,
+          transfer: [frameData],
         };
         const audioChunk = new EncodedAudioChunk(init);
-        audioDecodeWorker?.postMessage(audioChunk, [audioChunk]); // FIXME: does not post
+        audioDecodeWorker?.postMessage(audioChunk);
       }
     };
     await invoke("register_media_channel", { onMediaReceived });
@@ -320,7 +335,10 @@ export function Component() {
   }, [contact, exitCall, hangUp, searchParams]);
 
   useEffect(() => {
-    startCall();
+    if (!hasCallStarted.current) {
+      startCall();
+      hasCallStarted.current = true;
+    }
 
     // Clean up media streams when the component unmounts
     return () => {
