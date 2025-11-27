@@ -33,7 +33,7 @@ onmessage = (event) => {
   const videoReader = videoProcessor.readable.getReader();
 
   async function pumpVideo() {
-    const keyFrameInterval = 30;
+    const keyFrameInterval = 5;
     var frameCount = 0;
 
     while (true) {

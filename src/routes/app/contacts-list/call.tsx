@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/a11y/useMediaCaption: Not applicable for a video call */
 
 import { Channel, invoke } from "@tauri-apps/api/core";
-import { emit, listen, UnlistenFn } from "@tauri-apps/api/event";
+import { emit, listen, type UnlistenFn } from "@tauri-apps/api/event";
 import {
   Mic,
   MicOff,
@@ -154,6 +154,7 @@ export function Component() {
   const [callState, setCallState] = useState<CallState>(CallState.Calling);
   const [isSelfVideoOn, setIsSelfVideoOn] = useState<boolean>(true);
   const [isSelfAudioOn, setIsSelfAudioOn] = useState<boolean>(true);
+  const [isPeerVideoOn, setIsPeerVideoOn] = useState<boolean>(false);
 
   const supportsCameraSwitching = useMemo(
     () => navigator.mediaDevices.getSupportedConstraints().facingMode === true,
@@ -309,6 +310,9 @@ export function Component() {
         };
         const videoChunk = new EncodedVideoChunk(init);
         videoDecodeWorker?.postMessage(videoChunk);
+        setIsPeerVideoOn((prev) => {
+          return prev ? prev : true;
+        });
       }
 
       if ("audio" in mediaData) {
@@ -316,7 +320,7 @@ export function Component() {
         const init = {
           type: mediaData.audio.type,
           timestamp: mediaData.audio.timestamp,
-          duration: mediaData.audio.duration ?? 0,
+          duration: mediaData.audio.duration,
           data: frameData,
           transfer: [frameData],
         };
@@ -383,13 +387,14 @@ export function Component() {
         <div className="grow flex relative bg-secondary rounded-xl">
           <video ref={peerVideoRef} />
 
-          {/* TODO: Hide this if peer's camera is on */}
-          <div className="absolute top-[50%] left-[50%] -translate-[50%] flex flex-col text-center">
-            <span className="text-xl font-medium">{contact.nickname}</span>
-            {callState !== CallState.InCall && (
-              <span className="text-muted-foreground">{callState}</span>
-            )}
-          </div>
+          {!isPeerVideoOn && (
+            <div className="absolute top-[50%] left-[50%] -translate-[50%] flex flex-col text-center">
+              <span className="text-xl font-medium">{contact.nickname}</span>
+              {callState !== CallState.InCall && (
+                <span className="text-muted-foreground">{callState}</span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="backdrop-blur-sm rounded-xl border-secondary border-1 z-20 flex flex-row justify-center items-center gap-4 p-2">
