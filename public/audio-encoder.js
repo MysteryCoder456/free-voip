@@ -13,7 +13,7 @@ const audioEncoder = new AudioEncoder({
     postMessage(chunk);
   },
   error(error) {
-    console.error("Audio encoding error:", error);
+    console.error(`Audio encoding ${error.name} error: ${error.message}`);
   },
 });
 
@@ -35,8 +35,7 @@ onmessage = (event) => {
   }
 
   if (!audioSampleRate) {
-    console.error("audioSampleRate is not set");
-    return;
+    console.warn("audioSampleRate is not set");
   }
 
   /** @type {Float32Array} */
@@ -44,7 +43,7 @@ onmessage = (event) => {
 
   const audioData = new AudioData({
     format: "f32",
-    sampleRate: audioSampleRate,
+    sampleRate: audioSampleRate || 48000,
     numberOfFrames: pcm.length,
     numberOfChannels: 1,
     timestamp: performance.now(),

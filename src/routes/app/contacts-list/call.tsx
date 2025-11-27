@@ -25,7 +25,7 @@ enum CallState {
 type EncodedPayload = {
   type: "key" | "delta";
   timestamp: number;
-  duration: number | null;
+  duration: number;
   byteLength: number;
   frameData: ArrayBuffer | Array<number>;
 };
@@ -35,6 +35,8 @@ var audioEncodeWorker: Worker | undefined;
 
 var videoDecodeWorker: Worker | undefined;
 var audioDecodeWorker: Worker | undefined;
+
+var lastFrameSent: number = 0;
 
 async function setupEncodePipeline(
   videoTrack: MediaStreamTrack,
@@ -51,12 +53,19 @@ async function setupEncodePipeline(
       video: {
         type: videoChunk.type,
         timestamp: videoChunk.timestamp,
-        duration: videoChunk.duration,
+        duration: videoChunk.duration!,
         byteLength: videoChunk.byteLength,
         frameData: dataBuffer,
       },
     };
-    invoke("send_call_media", { media });
+
+    // Try to slow down the rate at which data is sent
+    // NOTE: works!
+    const now = Date.now();
+    if (now - lastFrameSent >= 1000) {
+      invoke("send_call_media", { media });
+      lastFrameSent = now;
+    }
   };
   videoEncodeWorker.onerror = console.error;
 
@@ -76,7 +85,8 @@ async function setupEncodePipeline(
         frameData: dataBuffer,
       },
     };
-    invoke("send_call_media", { media });
+    // TODO: uncomment
+    // invoke("send_call_media", { media });
   };
   audioEncodeWorker.onerror = console.error;
 
@@ -135,6 +145,7 @@ function getMediaStream(): Promise<MediaStream> {
     },
     audio: {
       echoCancellation: true,
+      channelCount: 1,
     },
   });
 }
@@ -292,13 +303,14 @@ export function Component() {
       { video: EncodedPayload } | { audio: EncodedPayload }
     >();
     onMediaReceived.onmessage = (mediaData) => {
+      console.log("received media");
+
       if ("video" in mediaData) {
-        console.log("received video media from peer");
         const frameData = new Uint8Array(mediaData.video.frameData as number[]);
         const init = {
           type: mediaData.video.type,
           timestamp: mediaData.video.timestamp,
-          duration: mediaData.video.duration ?? 0,
+          duration: mediaData.video.duration,
           data: frameData,
           transfer: [frameData],
         };
@@ -307,7 +319,6 @@ export function Component() {
       }
 
       if ("audio" in mediaData) {
-        console.log("received audio media from peer");
         const frameData = new Uint8Array(mediaData.audio.frameData as number[]);
         const init = {
           type: mediaData.audio.type,

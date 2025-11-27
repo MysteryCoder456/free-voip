@@ -8,10 +8,10 @@ const videoEncoder = new VideoEncoder({
    */
   output(chunk, _metadata) {
     // Send encoded video back to main thread
-    postMessage(chunk);
+    postMessage(chunk); // NOTE: works!
   },
   error(error) {
-    console.error("Video encoding error:", error);
+    console.error(`Video encoding ${error.name} error: ${error.message}`);
   },
 });
 
@@ -20,7 +20,7 @@ onmessage = (event) => {
   const videoTrack = event.data;
 
   videoEncoder.configure({
-    codec: "avc1.42E01E",
+    codec: "vp8",
     width: videoTrack.getSettings().width,
     height: videoTrack.getSettings().height,
     hardwareAcceleration: "prefer-hardware",
@@ -33,7 +33,7 @@ onmessage = (event) => {
   const videoReader = videoProcessor.readable.getReader();
 
   async function pumpVideo() {
-    const keyFrameInterval = 60; // frames
+    const keyFrameInterval = 1;
     var frameCount = 0;
 
     while (true) {
@@ -41,7 +41,7 @@ onmessage = (event) => {
         const { value, done } = await videoReader.read();
 
         videoEncoder.encode(value, {
-          keyFrame: frameCount % keyFrameInterval === 0,
+          keyFrame: frameCount === 0,
         });
         frameCount = (frameCount + 1) % keyFrameInterval;
 

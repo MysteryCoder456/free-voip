@@ -1,6 +1,6 @@
 use crate::contacts::ContactTicket;
 use iroh::{
-    endpoint::{Connection, WriteError},
+    endpoint::Connection,
     protocol::{AcceptError, ProtocolHandler},
     Endpoint, NodeAddr,
 };
@@ -139,10 +139,13 @@ impl CallProtocol {
         });
 
         // Outgoing media
+        // NOTE: works!
         let hang_up_clone = self.hang_up_tx.clone();
         tokio::spawn(async move {
             loop {
                 if let Ok(media) = out_media_rx.recv().await {
+                    println!("Got media to send!");
+
                     let media_serialized = postcard::to_stdvec(&media).unwrap();
                     proto_tx
                         .write_u32(media_serialized.len() as u32)
@@ -151,7 +154,6 @@ impl CallProtocol {
                     proto_tx.write_all(&media_serialized).await.unwrap();
                     println!("Sent!");
                 }
-                tokio::time::sleep(std::time::Duration::from_millis(200)).await;
             }
 
             // println!("Exited incoming media loop");

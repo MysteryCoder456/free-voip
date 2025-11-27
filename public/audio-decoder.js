@@ -10,7 +10,7 @@ const audioDecoder = new AudioDecoder({
     postMessage(data);
   },
   error(error) {
-    console.error("Audio decoding error:", error);
+    console.error(`Audio decoding ${error.name} error: ${error.message}`);
   },
 });
 audioDecoder.configure({
