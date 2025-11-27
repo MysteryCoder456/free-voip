@@ -3,6 +3,9 @@
 
 const generator = new VideoTrackGenerator();
 
+/** @type {WritableStreamDefaultWriter} */
+var generatorWriter;
+
 var initialized = false;
 var receivedFirstKeyFrame = false;
 
@@ -16,9 +19,7 @@ function createVideoDecoder() {
      */
     output(frame) {
       // Send decoded video back to main thread
-      generator.writable.getWriter().write(frame);
-      // FIXME: NEW ERROR LET'S FUCKING GO
-      console.log("decoder output");
+      generatorWriter.write(frame);
     },
     error(error) {
       console.error(`Video decoding ${error.name} error: ${error.message}`);
@@ -35,8 +36,10 @@ function createVideoDecoder() {
 
 onmessage = (event) => {
   if (!initialized) {
-    videoDecoder = createVideoDecoder();
+    generatorWriter = generator.writable.getWriter();
     postMessage(generator.track, [generator.track]);
+    videoDecoder = createVideoDecoder();
+
     initialized = true;
     return;
   }
@@ -54,9 +57,9 @@ onmessage = (event) => {
   if (videoChunk.type === "key") receivedFirstKeyFrame = true;
   else if (videoChunk.type === "delta" && !receivedFirstKeyFrame) return;
   videoDecoder.decode(videoChunk);
-  console.log("queued for decode");
 };
 
 onclose = (_event) => {
+  generatorWriter.ready.then(() => generatorWriter.close());
   videoDecoder.close();
 };

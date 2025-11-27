@@ -303,8 +303,6 @@ export function Component() {
       { video: EncodedPayload } | { audio: EncodedPayload }
     >();
     onMediaReceived.onmessage = (mediaData) => {
-      console.log("received media");
-
       if ("video" in mediaData) {
         const frameData = new Uint8Array(mediaData.video.frameData as number[]);
         const init = {
