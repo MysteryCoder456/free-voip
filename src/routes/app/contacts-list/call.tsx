@@ -61,6 +61,7 @@ async function setupEncodePipeline(
   videoEncodeWorker.onerror = console.error;
 
   audioEncodeWorker = new Worker("/audio-encoder.js");
+  /* TODO: uncomment
   audioEncodeWorker.onmessage = (event) => {
     const audioChunk = event.data;
 
@@ -76,9 +77,9 @@ async function setupEncodePipeline(
         frameData: dataBuffer,
       },
     };
-    // TODO: uncomment
-    // invoke("send_call_media", { media });
+    invoke("send_call_media", { media });
   };
+  */
   audioEncodeWorker.onerror = console.error;
 
   const audioCtx = new AudioContext();
