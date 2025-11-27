@@ -121,34 +121,44 @@ impl CallProtocol {
         // Incoming media
         let hang_up_clone = self.hang_up_tx.clone();
         tokio::spawn(async move {
-            loop {
-                let num_bytes = proto_rx.read_u32().await.unwrap();
+            while let Ok(num_bytes) = proto_rx.read_u32().await {
                 let mut buf = vec![0u8; num_bytes as usize];
-                proto_rx.read_exact(&mut buf).await.unwrap();
+
+                if let Err(err) = proto_rx.read_exact(&mut buf).await {
+                    eprintln!("Encountered error reading media data from network: {}", err);
+                    break;
+                }
+
                 let media = postcard::from_bytes::<CallMedia>(&buf).unwrap();
-                in_media_tx.send(media).unwrap();
+                if let Err(err) = in_media_tx.send(media) {
+                    eprintln!("Encountered error sending incoming media to GUI: {}", err);
+                    break;
+                }
             }
 
-            // println!("Exited incoming media loop");
-            // hang_up_clone.send(()).expect("Failed to signal hang up");
+            println!("Exited incoming media loop");
+            hang_up_clone.send(()).expect("Failed to signal hang up");
         });
 
         // Outgoing media
         let hang_up_clone = self.hang_up_tx.clone();
         tokio::spawn(async move {
-            loop {
-                if let Ok(media) = out_media_rx.recv().await {
-                    let media_serialized = postcard::to_stdvec(&media).unwrap();
-                    proto_tx
-                        .write_u32(media_serialized.len() as u32)
-                        .await
-                        .unwrap();
-                    proto_tx.write_all(&media_serialized).await.unwrap();
+            while let Ok(media) = out_media_rx.recv().await {
+                let media_serialized = postcard::to_stdvec(&media).unwrap();
+
+                if let Err(err) = proto_tx.write_u32(media_serialized.len() as u32).await {
+                    eprintln!("Encountered error writing media size to network: {}", err);
+                    break;
+                }
+
+                if let Err(err) = proto_tx.write_all(&media_serialized).await {
+                    eprintln!("Encountered error writing media data to network: {}", err);
+                    break;
                 }
             }
 
-            // println!("Exited incoming media loop");
-            // hang_up_clone.send(()).expect("Failed to signal hang up");
+            println!("Exited incoming media loop");
+            hang_up_clone.send(()).expect("Failed to signal hang up");
         });
     }
 
@@ -183,13 +193,17 @@ impl CallProtocol {
         Ok(response == RESPONSE_ACCEPT)
     }
 
-    pub async fn disconnect(&self) {
+    pub async fn disconnect(&self) -> bool {
         let mut conn_state = self.connection.lock().await;
-        if let Some(conn) = conn_state.as_ref() {
-            conn.close(0u32.into(), b"Hanging up");
-            conn.closed().await;
+        match conn_state.as_ref() {
+            Some(conn) => {
+                conn.close(0u32.into(), b"Hanging up");
+                conn.closed().await;
+                *conn_state = None;
+                true
+            }
+            None => false,
         }
-        *conn_state = None;
     }
 }
 

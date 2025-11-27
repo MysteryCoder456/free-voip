@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/a11y/useMediaCaption: Not applicable for a video call */
 
 import { Channel, invoke } from "@tauri-apps/api/core";
-import { emit, listen } from "@tauri-apps/api/event";
+import { emit, listen, UnlistenFn } from "@tauri-apps/api/event";
 import {
   Mic,
   MicOff,
@@ -148,7 +148,9 @@ export function Component() {
   const selfVideoRef = useRef<HTMLVideoElement>(null);
   const peerVideoRef = useRef<HTMLVideoElement>(null);
 
+  const eventUnlisteners = useRef<UnlistenFn[]>([]);
   const hasCallStarted = useRef(false);
+
   const [callState, setCallState] = useState<CallState>(CallState.Calling);
   const [isSelfVideoOn, setIsSelfVideoOn] = useState<boolean>(true);
   const [isSelfAudioOn, setIsSelfAudioOn] = useState<boolean>(true);
@@ -202,10 +204,11 @@ export function Component() {
     // Leave call page
     navigate(-1);
   }, [cleanUpMediaStream, navigate]);
+
   const hangUp = useCallback(async () => {
     try {
-      await invoke("hang_up");
-      exitCall();
+      const disconnected = await invoke("hang_up");
+      if (disconnected) exitCall();
     } catch (error) {
       console.error("Unable to hang up", error);
 
@@ -281,10 +284,11 @@ export function Component() {
     setCallState(CallState.InCall);
 
     // Listen for hang ups
-    listen("call-hang-up", () => {
+    const unlistenCallHangUp = await listen("call-hang-up", () => {
       // Calling `hangUp` instead of `exitCall` to set reset connection state
       hangUp();
     });
+    eventUnlisteners.current.push(unlistenCallHangUp);
 
     // Listen for incoming media
     const peerMediaStream = await setupDecodePipeline();
@@ -321,12 +325,13 @@ export function Component() {
       }
     };
     await invoke("register_media_channel", { onMediaReceived });
-    listen("decoded-call-media", (event) => {
+    const unlistenDecodedAudio = await listen("decoded-call-media", (event) => {
       if (event.payload instanceof AudioData) {
         // TODO: play the audio
         console.debug("received audio data");
       }
     });
+    eventUnlisteners.current.push(unlistenDecodedAudio);
 
     // Transmit self media to peer
     const [videoTrack] = stream.getVideoTracks();
@@ -342,6 +347,11 @@ export function Component() {
 
     // Clean up media streams when the component unmounts
     return () => {
+      // Unlisten to all Tauri events
+      for (const unlisten of eventUnlisteners.current) {
+        unlisten();
+      }
+
       if (selfVideoRef.current) cleanUpMediaStream(selfVideoRef.current);
       if (peerVideoRef.current) cleanUpMediaStream(peerVideoRef.current);
 

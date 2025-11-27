@@ -356,14 +356,14 @@ async fn register_media_channel(
 }
 
 #[tauri::command]
-async fn hang_up(app_state: State<'_, AppState>) -> Result<(), String> {
+async fn hang_up(app_state: State<'_, AppState>) -> Result<bool, String> {
     let app_state = app_state.read().await;
     let call_proto = app_state
         .call_protocol
         .as_ref()
         .ok_or("Call protocol not initialized".to_owned())?;
-    call_proto.disconnect().await;
-    Ok(())
+    let disconnected = call_proto.disconnect().await;
+    Ok(disconnected)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
