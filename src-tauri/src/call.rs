@@ -122,15 +122,10 @@ impl CallProtocol {
         let hang_up_clone = self.hang_up_tx.clone();
         tokio::spawn(async move {
             loop {
-                println!("Attempting to receive");
                 let num_bytes = proto_rx.read_u32().await.unwrap();
                 let mut buf = vec![0u8; num_bytes as usize];
                 proto_rx.read_exact(&mut buf).await.unwrap();
                 let media = postcard::from_bytes::<CallMedia>(&buf).unwrap();
-                match media {
-                    CallMedia::Video { .. } => println!("Received video frame"),
-                    CallMedia::Audio { .. } => println!("Received audio frame"),
-                }
                 in_media_tx.send(media).unwrap();
             }
 
@@ -139,20 +134,16 @@ impl CallProtocol {
         });
 
         // Outgoing media
-        // NOTE: works!
         let hang_up_clone = self.hang_up_tx.clone();
         tokio::spawn(async move {
             loop {
                 if let Ok(media) = out_media_rx.recv().await {
-                    println!("Got media to send!");
-
                     let media_serialized = postcard::to_stdvec(&media).unwrap();
                     proto_tx
                         .write_u32(media_serialized.len() as u32)
                         .await
                         .unwrap();
                     proto_tx.write_all(&media_serialized).await.unwrap();
-                    println!("Sent!");
                 }
             }
 

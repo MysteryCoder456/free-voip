@@ -8,7 +8,7 @@ const videoEncoder = new VideoEncoder({
    */
   output(chunk, _metadata) {
     // Send encoded video back to main thread
-    postMessage(chunk); // NOTE: works!
+    postMessage(chunk);
   },
   error(error) {
     console.error(`Video encoding ${error.name} error: ${error.message}`);
@@ -33,7 +33,7 @@ onmessage = (event) => {
   const videoReader = videoProcessor.readable.getReader();
 
   async function pumpVideo() {
-    const keyFrameInterval = 1;
+    const keyFrameInterval = 30;
     var frameCount = 0;
 
     while (true) {

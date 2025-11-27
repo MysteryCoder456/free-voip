@@ -36,8 +36,6 @@ var audioEncodeWorker: Worker | undefined;
 var videoDecodeWorker: Worker | undefined;
 var audioDecodeWorker: Worker | undefined;
 
-var lastFrameSent: number = 0;
-
 async function setupEncodePipeline(
   videoTrack: MediaStreamTrack,
   audioTrack: MediaStreamTrack,
@@ -58,14 +56,7 @@ async function setupEncodePipeline(
         frameData: dataBuffer,
       },
     };
-
-    // Try to slow down the rate at which data is sent
-    // NOTE: works!
-    const now = Date.now();
-    if (now - lastFrameSent >= 1000) {
-      invoke("send_call_media", { media });
-      lastFrameSent = now;
-    }
+    invoke("send_call_media", { media });
   };
   videoEncodeWorker.onerror = console.error;
 
